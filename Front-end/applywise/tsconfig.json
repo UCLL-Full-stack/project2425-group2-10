@@ -21,10 +21,11 @@
       "./node_modules/@types"
     ],
     "paths": {
-      "@components/*": ["./components/*"],
-      "@styles/*": ["./styles/*"],
-      "@services/*": ["./services/*"],
-      "@types/*": ["./types/*"]
+      "@components/*": ["components/*"],
+      "@services/*": ["services/*"],
+      "@types": ["types/index.ts"],
+      "@styles/*": ["styles/*"],
+      "@/*": ["./*"]
     },
     "forceConsistentCasingInFileNames": true
   },
@@ -33,7 +34,8 @@
     "**/*.ts",
     "**/*.tsx",
     "**/*.js",
-    "**/*.jsx"
+    "**/*.jsx",
+    "services/PlayerServicets"
   ],
   "exclude": [
     "node_modules"
