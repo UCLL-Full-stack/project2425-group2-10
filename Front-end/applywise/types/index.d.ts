@@ -1,21 +1,21 @@
 export type User = {
-    id?: number;
-    name?: string;
-    age?: number;
-    email?: string;
-    password?: string;
+    id: number;
+    name: string;
+    age: number;
+    email: string;
+    password: string;
   };
   
   export type Team = {
-    id?: number;
-    name?: string;
-    points?: number;
+    id: number;
+    name: string;
+    points: number;
   };
   
   export type Job = {
-    id?: number;
-    title?: string;
-    description?: string;
+    id: number;
+    title: string;
+    description: string;
   };
   
   export type StatusMessage = {

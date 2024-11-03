@@ -21,13 +21,7 @@ const Jobs: React.FC = ({
   const [jobCards, setJobCards] = useState<JSX.Element[]>([]);
 
   useEffect(() => {
-    const cards = jobs.map((job: Job) => (
-      <JobCard
-        key={job.id}
-        title={job.title}
-        description={job.description}
-      ></JobCard>
-    ));
+    const cards = jobs.map((job: Job) => <JobCard job={job}/>);
     setJobCards(cards);
   }, []);
 
