@@ -1,3 +1,5 @@
+// front-end/applywise/types/index.d.ts
+
 export type User = {
     id: number;
     name: string;
