@@ -36,6 +36,9 @@ const Header: React.FC = () => {
               Login
             </Link>
           )}
+            <Link href="/register" className="hover:text-gray-200">
+              Register
+            </Link>
         </div>
       </nav>
     </header>

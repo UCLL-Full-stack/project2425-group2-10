@@ -45,7 +45,7 @@ const LoginPage: React.FC = () => {
           onSubmit={handleSubmit}
           className="bg-white p-6 rounded-lg shadow w-full max-w-md"
         >
-          <h1 className="text-2xl font-bold mb-4 text-center">Admin Login</h1>
+          <h1 className="text-2xl font-bold mb-4 text-center">Login</h1>
           {/* Email */}
           <div className="mb-4">
             <label htmlFor="email" className="block text-gray-700 font-semibold mb-2">

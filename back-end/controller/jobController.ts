@@ -1,43 +1,49 @@
 // back-end/controller/jobController.ts
 
-import { Response } from 'express';
+import { Request, Response } from 'express';
+import { AuthRequest } from '../types/AuthRequest';
 import { jobRepository } from '../repository/jobRepository';
-import { Job } from '../model/job';
-import { Request } from 'express';
 
 /**
- * Controller to add a new job.
- * @param req - Authenticated request containing admin information.
- * @param res - Express response object.
+ * Allows admins to add a new job opportunity.
+ * Only accessible by a recruiter (admin).
  */
-export const addJob = (req: Request, res: Response) => {
-  const { companyName, jobTitle, date, status, description, requiredSkills } = req.body;
-
-  // Validation: Ensure required fields are present
-  if (!companyName || !jobTitle || !date || !status) {
-    return res.status(400).json({ message: 'Missing required fields.' });
+export const addJob = (req: AuthRequest, res: Response) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ message: 'Forbidden: Only admins can add job opportunities.' });
   }
 
-  const jobData: Omit<Job, 'id'> = {
-    companyName,
-    jobTitle,
-    date,
-    status,
-    description,
-    requiredSkills,
-    adminId: req.admin!.id, // Non-null assertion as verifyAdmin ensures admin exists
-  };
+  const { companyName, jobTitle, date, status, description, requiredSkills } = req.body;
 
-  const newJob = jobRepository.addJob(jobData);
-  res.status(201).json({ message: 'Job added successfully.', job: newJob });
+  try {
+    const newJob = jobRepository.addJob({
+      companyName,
+      jobTitle,
+      date,
+      status,
+      description,
+      requiredSkills,
+      adminId: req.user.id,
+    });
+
+    res.status(201).json({
+      message: 'Job added successfully.',
+      job: newJob,
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 };
 
 /**
- * Controller to retrieve all jobs.
- * @param req - Authenticated request containing admin information.
- * @param res - Express response object.
+ * Retrieves all job opportunities.
+ * Accessible by all users (applicants and recruiters).
  */
-export const getJobs = (req: Request, res: Response) => {
-  const jobs: Job[] = jobRepository.getAllJobs();
-  res.status(200).json(jobs);
+export const getAllJobs = (req: Request, res: Response) => {
+  try {
+    const jobs = jobRepository.getAllJobs();
+    res.status(200).json(jobs);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 };

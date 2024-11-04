@@ -1,9 +1,9 @@
 // back-end/routes/jobRoutes.ts
 
 import { Router } from 'express';
-import { addJob, getJobs } from '../controller/jobController';
+import { addJob, getAllJobs } from '../controller/jobController';
 import { authMiddleware } from '../middleware/authMiddleware';
-import { verifyAdmin } from '../middleware/verifyAdmin';
+import { authorizeRole } from '../middleware/authorizeRole';
 
 const router = Router();
 
@@ -11,9 +11,8 @@ const router = Router();
  * @swagger
  * /jobs:
  *   post:
- *     summary: Add a new job opportunity
- *     tags:
- *       - Jobs
+ *     summary: Add a new job
+ *     tags: [Jobs]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -21,42 +20,42 @@ const router = Router();
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Job'
+ *             type: object
+ *             properties:
+ *               companyName:
+ *                 type: string
+ *               jobTitle:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date
+ *               status:
+ *                 type: string
+ *                 enum: [Open, Closed]
+ *               description:
+ *                 type: string
+ *               requiredSkills:
+ *                 type: array
+ *                 items:
+ *                   type: string
  *     responses:
  *       201:
- *         description: Job added successfully
- *       400:
- *         description: Missing required fields
- *       401:
- *         description: Unauthorized
+ *         description: Job added successfully.
  *       403:
- *         description: Forbidden
+ *         description: Forbidden: Only admins can add job opportunities.
  */
-router.post('/', authMiddleware, verifyAdmin, addJob);
+router.post('/', authMiddleware, authorizeRole('admin'), addJob);
 
 /**
  * @swagger
  * /jobs:
  *   get:
  *     summary: Get all job opportunities
- *     tags:
- *       - Jobs
- *     security:
- *       - bearerAuth: []
+ *     tags: [Jobs]
  *     responses:
  *       200:
- *         description: A list of job opportunities
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Job'
- *       401:
- *         description: Unauthorized
- *       403:
- *         description: Forbidden
+ *         description: An array of job opportunities.
  */
-router.get('/', authMiddleware, verifyAdmin, getJobs);
+router.get('/', authMiddleware, getAllJobs);
 
 export default router;
