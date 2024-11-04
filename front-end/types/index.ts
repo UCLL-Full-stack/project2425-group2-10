@@ -9,5 +9,4 @@ export interface Job {
   description?: string;
   requiredSkills?: string[];
   adminId: number;
-  // Add additional properties if needed
 }

@@ -1,28 +1,28 @@
-// app.ts
+// back-end/app.ts
 
 import * as dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
-import * as bodyParser from 'body-parser';
+import bodyParser from 'body-parser';
 import swaggerJSDoc from 'swagger-jsdoc';
 import swaggerUi from 'swagger-ui-express';
-import { verifyAdmin } from './middleware/verifyAdmin';
-import { addJob, getJobs } from './controller/jobController';
+import authRoutes from './routes/authRoutes';
+import jobRoutes from './routes/jobRoutes';
 
 const app = express();
-dotenv.config();
 const port = process.env.APP_PORT || 3000;
 
+// CORS Configuration
 app.use(
   cors({
-    origin: 'http://localhost:8080', // Update to match your frontend URL and port
+    origin: 'http://localhost:8080', // Frontend URL
     credentials: true,
   })
 );
 
 app.use(bodyParser.json());
-app.post('/jobs', verifyAdmin, addJob);
-
 
 // Swagger setup
 const swaggerDefinition = {
@@ -50,86 +50,45 @@ const swaggerDefinition = {
         },
       },
     },
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+      },
+    },
   },
+  security: [
+    {
+      bearerAuth: [],
+    },
+  ],
 };
 
 const options = {
   swaggerDefinition,
-  apis: ['./app.ts', './controller/*.ts'],
+  apis: ['./app.ts', './controller/*.ts', './routes/*.ts'],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
+// Status Route
 app.get('/status', (req, res) => {
   res.json({ message: 'Back-end is running...' });
 });
 
-/**
- * @swagger
- * /jobs:
- *   post:
- *     summary: Add a new job opportunity
- *     tags:
- *       - Jobs
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - companyName
- *               - jobTitle
- *               - date
- *               - status
- *               - adminId
- *             properties:
- *               companyName:
- *                 type: string
- *               jobTitle:
- *                 type: string
- *               date:
- *                 type: string
- *                 format: date
- *               status:
- *                 type: string
- *               description:
- *                 type: string
- *               requiredSkills:
- *                 type: array
- *                 items:
- *                   type: string
- *               adminId:
- *                 type: number
- *     responses:
- *       201:
- *         description: Job added successfully
- *       400:
- *         description: Missing required fields
- */
+// Authentication Routes
+app.use('/auth', authRoutes);
 
-/**
- * @swagger
- * /jobs:
- *   get:
- *     summary: Get all job opportunities
- *     tags:
- *       - Jobs
- *     responses:
- *       200:
- *         description: A list of job opportunities
- *         content:
- *           application/json:
- *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Job'
- */
+// Job Routes (secured)
+app.use('/jobs', jobRoutes);
 
-app.post('/jobs', addJob);
-app.get('/jobs', getJobs);
+// Start the server only if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(port, () => {
+    console.log(`Back-end is running on port ${port}.`);
+  });
+}
 
-app.listen(port, () => {
-  console.log(`Back-end is running on port ${port}.`);
-});
+export default app;

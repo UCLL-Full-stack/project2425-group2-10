@@ -1,15 +1,20 @@
-// repository/jobRepository.ts
+// back-end/repository/jobRepository.ts
 
 import { Job } from '../model/job';
 
-let jobs: Job[] = [];
-let nextJobId = 1;
+let jobs: Job[] = []; // In-memory storage for jobs
+let currentId = 1;
 
 export const jobRepository = {
-  addJob: (job: Omit<Job, 'id'>): Job => {
-    const newJob: Job = { ...job, id: nextJobId++ };
+  addJob: (jobData: Omit<Job, 'id'>): Job => {
+    const newJob: Job = { id: currentId++, ...jobData };
     jobs.push(newJob);
     return newJob;
   },
-  getJobs: (): Job[] => jobs,
+
+  getAllJobs: (): Job[] => {
+    return jobs;
+  },
+
+  // Additional methods like updateJob, deleteJob can be added here
 };

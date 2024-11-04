@@ -1,19 +1,34 @@
-// pages/index.tsx
+// front-end/pages/index.tsx
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import axios from 'axios';
-import { Job } from '@types';
-import Header from '@components/header';
+import Header from '../components/header';
+import { AuthContext } from '../context/AuthContext';
+import { Job } from '../types';
+import { ClipLoader } from 'react-spinners';
 
 const HomePage: React.FC = () => {
+  const { isAuthenticated, token } = useContext(AuthContext);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isAuthenticated) {
+      // Optionally, redirect to login if you want to protect the job overview
+      // router.push('/login');
+      // For now, allow unauthenticated access to view jobs
+      setLoading(false);
+      return;
+    }
+
     const fetchJobs = async () => {
       try {
-        const response = await axios.get<Job[]>('http://localhost:3000/jobs');
+        const response = await axios.get<Job[]>('http://localhost:3000/jobs', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         setJobs(response.data);
       } catch (error) {
         console.error('Error fetching jobs:', error);
@@ -24,7 +39,7 @@ const HomePage: React.FC = () => {
     };
 
     fetchJobs();
-  }, []);
+  }, [isAuthenticated, token]);
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -32,7 +47,9 @@ const HomePage: React.FC = () => {
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Job Opportunities</h1>
         {loading ? (
-          <p>Loading jobs...</p>
+          <div className="flex justify-center">
+            <ClipLoader size={50} color="#2563EB" />
+          </div>
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : jobs.length > 0 ? (

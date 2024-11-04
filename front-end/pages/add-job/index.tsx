@@ -1,11 +1,15 @@
 // front-end/pages/add-job/index.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import Header from '@components/header';
+import Header from '../../components/header';
+import { AuthContext } from '../../context/AuthContext';
+import { toast } from 'react-toastify';
+import { ClipLoader } from 'react-spinners'; // For loading indicator
 
 const AddJobPage: React.FC = () => {
+  const { isAuthenticated, token } = useContext(AuthContext);
   const router = useRouter();
   const [formData, setFormData] = useState({
     companyName: '',
@@ -16,7 +20,13 @@ const AddJobPage: React.FC = () => {
     requiredSkills: '',
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [successMessage, setSuccessMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push('/login');
+    }
+  }, [isAuthenticated, router]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -38,11 +48,14 @@ const AddJobPage: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrors({});
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
       return;
     }
+
+    setIsSubmitting(true);
 
     // Prepare data for submission
     const data = {
@@ -54,14 +67,18 @@ const AddJobPage: React.FC = () => {
       requiredSkills: formData.requiredSkills
         .split(',')
         .map((skill) => skill.trim()),
-      adminId: 1, // Assuming adminId is 1 for now
     };
 
     try {
-      const response = await axios.post('http://localhost:3000/jobs', data);
-      setSuccessMessage(response.data.message);
-      // Optionally, redirect to job overview or clear the form
-      // router.push('/'); // Redirect to homepage/job overview
+      const response = await axios.post('http://localhost:3000/jobs', data, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      toast.success(response.data.message);
+      // Redirect to job overview
+      router.push('/');
+      // Optionally, clear the form
       setFormData({
         companyName: '',
         jobTitle: '',
@@ -72,7 +89,10 @@ const AddJobPage: React.FC = () => {
       });
     } catch (error) {
       console.error('Error adding job:', error);
-      setErrors({ submit: 'Failed to add job. Please try again.' });
+      toast.error(
+        (error as any).response?.data?.message || 'Failed to add job. Please try again.'
+      );
+      setIsSubmitting(false);
     }
   };
 
@@ -81,16 +101,6 @@ const AddJobPage: React.FC = () => {
       <Header />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Add New Job Opportunity</h1>
-        {successMessage && (
-          <div className="bg-green-100 text-green-800 p-4 rounded mb-6">
-            {successMessage}
-          </div>
-        )}
-        {errors.submit && (
-          <div className="bg-red-100 text-red-800 p-4 rounded mb-6">
-            {errors.submit}
-          </div>
-        )}
         <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow">
           {/* Company Name */}
           <div className="mb-4">
@@ -236,9 +246,13 @@ const AddJobPage: React.FC = () => {
           {/* Submit Button */}
           <button
             type="submit"
-            className="bg-blue-600 text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
+            disabled={isSubmitting}
+            className="w-full bg-blue-600 text-white px-6 py-2 rounded font-semibold hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 flex items-center justify-center"
           >
-            Add Job
+            {isSubmitting && (
+              <ClipLoader size={20} color="#ffffff" className="mr-2" />
+            )}
+            {isSubmitting ? 'Adding...' : 'Add Job'}
           </button>
         </form>
       </main>
