@@ -1,18 +1,13 @@
 {
-    "compilerOptions": {
-      "module": "commonjs",
-      "target": "es6",
-      "rootDir": "./",
-      "strict": true,
-      "esModuleInterop": true,
-      "baseUrl": ".",
-      "paths": {
-        "@types": ["../front-end/applywise/types/index.d.ts"]
-      },
-      "moduleResolution": "node",
-      "resolveJsonModule": true
-    },
-    "include": ["./**/*.ts", "../front-end/applywise/types/*.d.ts"],
-    "exclude": ["node_modules"]
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "rootDir": "./",
+    "strict": true,
+    "esModuleInterop": true,
+    "baseUrl": "./",
+    "paths": {
+      "@types": ["types/*"]
+    }
   }
-  
+}

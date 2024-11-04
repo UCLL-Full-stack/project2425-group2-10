@@ -1,0 +1,10 @@
+/* front-end/styles/globals.css */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom global styles */
+body {
+    @apply bg-gray-50 text-gray-800;
+}

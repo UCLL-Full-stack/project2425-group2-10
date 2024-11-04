@@ -1,0 +1,8 @@
+/* styles/Home.module.css */
+
+.highlight {
+    background-color: #fffbea;
+    border-left: 4px solid #fbbf24;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}

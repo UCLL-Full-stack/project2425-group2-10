@@ -16,18 +16,29 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
-    "baseUrl": ".",
+    "baseUrl": "",
     "typeRoots": [
-      "./node_modules/@types"
+      "node_modules/@types"
     ],
     "paths": {
-      "@components/*": ["components/*"],
-      "@services/*": ["services/*"],
-      "@types": ["types/index.ts"],
-      "@styles/*": ["styles/*"],
-      "@/*": ["./*"]
+      "@components/*": [
+        "components/*"
+      ],
+      "@services/*": [
+        "services/*"
+      ],
+      "@types": [
+        "types/index.ts"
+      ],
+      "@styles/*": [
+        "styles/*"
+      ],
+      "@/*": [
+        "*"
+      ]
     },
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "target": "ES2017"
   },
   "include": [
     "next-env.d.ts",
