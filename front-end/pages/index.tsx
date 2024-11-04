@@ -8,21 +8,14 @@ import { Job } from '../types';
 import { ClipLoader } from 'react-spinners';
 
 const HomePage: React.FC = () => {
-  const { isAuthenticated, token } = useContext(AuthContext);
+  const { isAuthenticated, token, role } = useContext(AuthContext);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      // Optionally, redirect to login if you want to protect the job overview
-      // router.push('/login');
-      // For now, allow unauthenticated access to view jobs
-      setLoading(false);
-      return;
-    }
-
     const fetchJobs = async () => {
+      setLoading(true);
       try {
         const response = await axios.get<Job[]>('http://localhost:3000/jobs', {
           headers: {
@@ -38,7 +31,11 @@ const HomePage: React.FC = () => {
       }
     };
 
-    fetchJobs();
+    if (isAuthenticated) {
+      fetchJobs();
+    } else {
+      setLoading(false); // Allow unauthenticated access to see job listings
+    }
   }, [isAuthenticated, token]);
 
   return (
@@ -46,6 +43,7 @@ const HomePage: React.FC = () => {
       <Header />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">Job Opportunities</h1>
+
         {loading ? (
           <div className="flex justify-center">
             <ClipLoader size={50} color="#2563EB" />

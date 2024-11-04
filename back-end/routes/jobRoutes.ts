@@ -42,7 +42,7 @@ const router = Router();
  *       201:
  *         description: Job added successfully.
  *       403:
- *         description: Forbidden: Only admins can add job opportunities.
+ *         description: Forbidden. Only admins can add job opportunities.
  */
 router.post('/', authMiddleware, authorizeRole('admin'), addJob);
 

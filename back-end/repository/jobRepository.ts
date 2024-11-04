@@ -1,5 +1,3 @@
-// back-end/repository/jobRepository.ts
-
 import { Job } from '../model/job';
 
 // In-memory storage for job postings

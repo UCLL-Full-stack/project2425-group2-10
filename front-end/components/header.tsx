@@ -1,48 +1,46 @@
 // front-end/components/header.tsx
 
-import React, { useContext } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { AuthContext } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 const Header: React.FC = () => {
-  const { isAuthenticated, logout } = useContext(AuthContext);
+  const { isAuthenticated, logout, role } = useAuth();
 
   return (
-    <header className="bg-blue-600 text-white shadow">
-      <nav className="container mx-auto flex justify-between items-center py-4 px-6">
+    <header className="bg-blue-600 text-white p-4 shadow">
+      <div className="container mx-auto flex justify-between items-center">
+        <h1 className="text-xl font-bold">
+          <Link href="/">ApplyWise</Link>
+        </h1>
         <div>
-          <Link href="/" className="text-2xl font-bold hover:text-gray-200">
-            ApplyWise
-          </Link>
-        </div>
-        <div className="flex space-x-4">
-          <Link href="/" className="hover:text-gray-200">
-            Home
-          </Link>
-          {isAuthenticated ? (
+          {!isAuthenticated ? (
             <>
-              <Link href="/add-job" className="hover:text-gray-200">
-                Add Job
+              <Link href="/login" className="mr-4 hover:underline">
+                Login
               </Link>
-              <button
-                onClick={logout}
-                className="hover:text-gray-200 focus:outline-none"
-              >
+              <Link href="/register" className="hover:underline">
+                Register
+              </Link>
+            </>
+          ) : (
+            <>
+              {/* Only show "Add Job" if the user is an admin */}
+              {role === 'admin' && (
+                <Link href="/add-job" className="mr-4 hover:underline">
+                  Add Job
+                </Link>
+              )}
+              <button onClick={logout} className="hover:underline">
                 Logout
               </button>
             </>
-          ) : (
-            <Link href="/login" className="hover:text-gray-200">
-              Login
-            </Link>
           )}
-            <Link href="/register" className="hover:text-gray-200">
-              Register
-            </Link>
         </div>
-      </nav>
+      </div>
     </header>
   );
 };
 
 export default Header;
+

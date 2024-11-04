@@ -1,8 +1,6 @@
-// back-end/middleware/authMiddleware.ts
-
 import jwt from 'jsonwebtoken';
 import { userRepository } from '../repository/userRepository';
-import { Response, NextFunction, Request } from 'express';
+import { Response, NextFunction } from 'express';
 import { AuthRequest } from '../types/AuthRequest';
 
 export const authMiddleware = (

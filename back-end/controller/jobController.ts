@@ -1,5 +1,3 @@
-// back-end/controller/jobController.ts
-
 import { Request, Response } from 'express';
 import { AuthRequest } from '../types/AuthRequest';
 import { jobRepository } from '../repository/jobRepository';

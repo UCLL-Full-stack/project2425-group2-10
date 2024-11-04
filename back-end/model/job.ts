@@ -1,5 +1,3 @@
-// back-end/model/job.ts
-
 export interface Job {
     id: number;
     companyName: string;
