@@ -5,24 +5,21 @@ import Link from 'next/link';
 
 const Header: React.FC = () => {
   return (
-    <header className="bg-white shadow">
-      <nav className="container mx-auto px-4 flex justify-between items-center py-4">
+    <header className="bg-blue-600 text-white shadow">
+      <nav className="container mx-auto flex justify-between items-center py-4 px-6">
         <div>
-          <Link href="/" className="text-2xl font-bold text-blue-600">
+          <Link href="/" className="text-2xl font-bold">
             ApplyWise
           </Link>
         </div>
-        <div className="space-x-4">
-          <Link href="/" className="text-gray-600 hover:text-blue-600">
+        <div className="flex space-x-4">
+          <Link href="/" className="hover:text-gray-200">
             Home
           </Link>
-          {/* Additional navigation links */}
-          <Link href="/about" className="text-gray-600 hover:text-blue-600">
-            About
+          <Link href="/add-job" className="hover:text-gray-200">
+            Add Job
           </Link>
-          <Link href="/contact" className="text-gray-600 hover:text-blue-600">
-            Contact
-          </Link>
+          {/* Future navigation links */}
         </div>
       </nav>
     </header>

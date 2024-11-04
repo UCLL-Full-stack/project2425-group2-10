@@ -6,6 +6,7 @@
     "start": "npm run dev"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.1",
     "axios": "^1.7.7",
     "bootstrap": "5.2.3",
     "classnames": "^2.3.2",
@@ -16,10 +17,12 @@
     "react": "^18.3.1",
     "react-datepicker": "^4.16.0",
     "react-dom": "^18.3.1",
+    "react-hook-form": "^7.53.1",
     "react-i18next": "^13.4.1",
     "swr": "^2.2.0",
     "tailwindcss-animate": "^1.0.7",
-    "use-interval": "^1.4.0"
+    "use-interval": "^1.4.0",
+    "yup": "^1.4.0"
   },
   "devDependencies": {
     "@types/node": "18.15.0",
