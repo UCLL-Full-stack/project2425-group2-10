@@ -1,16 +1,17 @@
+// back-end/tsconfig.json
+
 {
   "compilerOptions": {
-      "lib": ["es2016", "dom"],
       "target": "ES6",
       "module": "commonjs",
-      "outDir": "./dist",
       "rootDir": "./",
+      "outDir": "dist",
       "strict": true,
-      "typeRoots": ["./types", "./node_modules/@types"],
       "esModuleInterop": true,
+      "skipLibCheck": true,
       "forceConsistentCasingInFileNames": true,
-      "skipLibCheck": true
-    },
-    "include": ["./types/**/*.ts", "./**/*.ts"],
-    "exclude": ["node_modules"]
+      "typeRoots": ["./types", "./node_modules/@types"]
+  },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

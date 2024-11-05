@@ -3,10 +3,9 @@
 export interface Application {
     id: number;
     jobId: number;
-    userId: number;
-    resumePath: string;
-    coverLetterPath: string;
-    status: 'Applied' | 'Reviewed' | 'Interviewed' | 'Rejected' | 'Accepted';
-    appliedAt: Date;
-  }
-  
+    applicantName: string;
+    applicantEmail: string;
+    resumeUrl: string; // Path to the uploaded resume
+    coverLetterUrl: string; // Path to the uploaded cover letter
+    appliedAt: string; // ISO date string
+}

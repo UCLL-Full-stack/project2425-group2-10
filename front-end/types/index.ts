@@ -10,3 +10,10 @@ export interface Job {
   requiredSkills?: string[];
   adminId: number;
 }
+
+export interface Admin {
+  id: number;
+  name: string;
+  email: string;
+  // Add more fields as needed, e.g., passwordHash
+}

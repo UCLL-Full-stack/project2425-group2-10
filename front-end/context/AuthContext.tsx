@@ -6,16 +6,19 @@ import { useRouter } from 'next/router';
 
 interface AuthContextProps {
   isAuthenticated: boolean;
-  token: string | null;
-  role: 'user' | 'admin' | null;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    role: 'user' | 'admin' | null;
+  } | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
 const defaultAuthContext: AuthContextProps = {
   isAuthenticated: false,
-  token: null,
-  role: null,
+  user: null,
   login: async () => {},
   logout: () => {},
 };
@@ -28,8 +31,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [role, setRole] = useState<'user' | 'admin' | null>(null);
+  const [user, setUser] = useState<AuthContextProps['user']>(null);
   const router = useRouter();
 
   const login = async (email: string, password: string) => {
@@ -38,21 +40,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email,
         password,
       });
-  
-      const { token, role } = response.data;
+
+      const { user } = response.data;
       setIsAuthenticated(true);
-      setToken(token);
-      setRole(role);
-  
-      // Save token and role to localStorage for persistence
-      localStorage.setItem('token', token);
-      localStorage.setItem('role', role);
-  
+      setUser(user);
+
+      // Save user info to localStorage for persistence
+      localStorage.setItem('user', JSON.stringify(user));
+
       // Redirect to homepage
       router.push('/');
     } catch (error) {
       console.error("Login failed:", error);
-  
+
       if (axios.isAxiosError(error) && error.response) {
         // Log the error response from the server
         console.log("Error response data:", error.response.data);
@@ -65,27 +65,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     setIsAuthenticated(false);
-    setToken(null);
-    setRole(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('role');
+    setUser(null);
+    localStorage.removeItem('user');
     router.push('/login');
   };
 
   useEffect(() => {
-    // Load token and role from localStorage on initial load
-    const savedToken = localStorage.getItem('token');
-    const savedRole = localStorage.getItem('role') as 'user' | 'admin' | null;
-
-    if (savedToken && savedRole) {
+    // Load user from localStorage on initial load
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
       setIsAuthenticated(true);
-      setToken(savedToken);
-      setRole(savedRole);
     }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, token, role, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

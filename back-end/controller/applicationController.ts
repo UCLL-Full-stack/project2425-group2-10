@@ -1,67 +1,66 @@
 // back-end/controller/applicationController.ts
 
-import { Response } from 'express';
-import { AuthRequest } from '../types/AuthRequest';
+import { Request, Response } from 'express';
 import { applicationRepository } from '../repository/applicationRepository';
 import { jobRepository } from '../repository/jobRepository';
 
 /**
- * Allows a user to apply to a specific job.
- * Accessible only by users (applicants).
+ * Handles job application submissions.
  */
-export const applyToJob = (req: AuthRequest, res: Response) => {
-  if (req.user?.role !== 'user') {
-    return res.status(403).json({ message: 'Forbidden: Only users can apply to jobs.' });
-  }
+export const applyForJob = (req: Request, res: Response) => {
+    const jobId = parseInt(req.params.id, 10);
 
-  const jobId = parseInt(req.params.jobId, 10);
-  const userId = req.user.id;
-  const { resumePath, coverLetterPath } = req.body;
+    // Validate job ID
+    if (isNaN(jobId)) {
+        return res.status(400).json({ message: 'Invalid job ID.' });
+    }
 
-  if (isNaN(jobId) || !resumePath || !coverLetterPath) {
-    return res.status(400).json({ message: 'Invalid job ID or missing application details.' });
-  }
+    // Check if job exists
+    const job = jobRepository.getJobById(jobId);
+    if (!job) {
+        return res.status(404).json({ message: 'Job not found.' });
+    }
 
-  const job = jobRepository.getJobById(jobId);
-  if (!job) {
-    return res.status(404).json({ message: 'Job not found.' });
-  }
+    // Ensure files are uploaded
+    if (
+        !req.files ||
+        !req.files['resume'] ||
+        !req.files['coverLetter'] ||
+        req.files['resume'].length === 0 ||
+        req.files['coverLetter'].length === 0
+    ) {
+        return res.status(400).json({ message: 'Resume and Cover Letter are required.' });
+    }
 
-  const existingApplication = applicationRepository.getApplicationByUserAndJob(userId, jobId);
-  if (existingApplication) {
-    return res.status(400).json({ message: 'You have already applied for this job.' });
-  }
+    // Extract files
+    const resume = req.files['resume'][0];
+    const coverLetter = req.files['coverLetter'][0];
 
-  const newApplication = applicationRepository.createApplication({
-    jobId,
-    userId,
-    resumePath,
-    coverLetterPath,
-    status: 'Applied',
-    appliedAt: new Date(),
-  });
+    // Extract applicant details from form fields
+    const { applicantName, applicantEmail } = req.body;
 
-  res.status(201).json({
-    message: 'Application submitted successfully.',
-    application: newApplication,
-  });
-};
+    // Validate applicant details
+    if (!applicantName || typeof applicantName !== 'string' || applicantName.trim() === '') {
+        return res.status(400).json({ message: 'Applicant name is required and must be a non-empty string.' });
+    }
 
-/**
- * Retrieves the job application overview for the logged-in user.
- * Accessible only by users (applicants).
- */
-export const getUserApplications = (req: AuthRequest, res: Response) => {
-  if (req.user?.role !== 'user') {
-    return res.status(403).json({ message: 'Forbidden: Only users can view applications.' });
-  }
+    if (
+        !applicantEmail ||
+        typeof applicantEmail !== 'string' ||
+        !/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(applicantEmail)
+    ) {
+        return res.status(400).json({ message: 'A valid applicant email is required.' });
+    }
 
-  const userId = req.user.id;
+    // Save application
+    const application = applicationRepository.addApplication({
+        jobId,
+        applicantName: applicantName.trim(),
+        applicantEmail: applicantEmail.trim(),
+        resumeUrl: `/uploads/resumes/${resume.filename}`,
+        coverLetterUrl: `/uploads/coverLetters/${coverLetter.filename}`,
+        appliedAt: new Date().toISOString(),
+    });
 
-  try {
-    const applications = applicationRepository.getApplicationsByUserId(userId);
-    res.status(200).json(applications);
-  } catch (error) {
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
+    res.status(201).json({ message: 'Application submitted successfully.', application });
 };

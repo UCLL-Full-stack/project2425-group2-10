@@ -1,19 +1,10 @@
 // back-end/types/express/index.d.ts
 
-import { Application } from '../../model/application';
-import { AdminInfo } from '../../model/admin';
-import { User } from '../../model/user'; // Ensure this path is correct
-import { UserInfo } from '../../model/user';
+import 'express';
+import { Express } from 'express-serve-static-core';
 
-declare global {
-  namespace Express {
+declare module 'express-serve-static-core' {
     interface Request {
-      adminId?: number;
-      admin?: AdminInfo;
-      user?: UserInfo;
-      userId?: number; // For authenticated users
-      application?: Application;
-      // Add other custom properties if necessary
+        files: { [fieldname: string]: Express.Multer.File[] };
     }
-  }
 }

@@ -1,47 +1,41 @@
+// back-end/controller/jobController.ts
+
 import { Request, Response } from 'express';
-import { AuthRequest } from '../types/AuthRequest';
 import { jobRepository } from '../repository/jobRepository';
+import { Job } from '../model/job';
 
 /**
- * Allows admins to add a new job opportunity.
- * Only accessible by a recruiter (admin).
+ * Adds a new job to the repository.
+ * Validates required fields before adding.
  */
-export const addJob = (req: AuthRequest, res: Response) => {
-  if (req.user?.role !== 'admin') {
-    return res.status(403).json({ message: 'Forbidden: Only admins can add job opportunities.' });
-  }
+export const addJob = (req: Request, res: Response) => {
+    const { companyName, jobTitle, date, status, description, requiredSkills, adminId } = req.body;
 
-  const { companyName, jobTitle, date, status, description, requiredSkills } = req.body;
+    // Basic validation
+    if (!companyName || !jobTitle || !date || !status || !adminId) {
+        return res.status(400).json({ message: 'Missing required fields.' });
+    }
 
-  try {
-    const newJob = jobRepository.addJob({
-      companyName,
-      jobTitle,
-      date,
-      status,
-      description,
-      requiredSkills,
-      adminId: req.user.id,
-    });
+    // Additional validation can be added here (e.g., date format)
 
-    res.status(201).json({
-      message: 'Job added successfully.',
-      job: newJob,
-    });
-  } catch (error) {
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
+    const jobData: Omit<Job, 'id'> = {
+        companyName,
+        jobTitle,
+        date,
+        status,
+        description,
+        requiredSkills,
+        adminId,
+    };
+
+    const newJob = jobRepository.addJob(jobData);
+    res.status(201).json({ message: 'Job added successfully.', job: newJob });
 };
 
 /**
- * Retrieves all job opportunities.
- * Accessible by all users (applicants and recruiters).
+ * Retrieves all jobs from the repository.
  */
-export const getAllJobs = (req: Request, res: Response) => {
-  try {
-    const jobs = jobRepository.getAllJobs();
+export const getJobs = (req: Request, res: Response) => {
+    const jobs = jobRepository.getJobs();
     res.status(200).json(jobs);
-  } catch (error) {
-    res.status(500).json({ message: 'Internal Server Error' });
-  }
 };
