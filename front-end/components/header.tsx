@@ -1,11 +1,18 @@
 // front-end/components/header.tsx
 
-import React from 'react';
+import React, { useContext } from 'react';
 import Link from 'next/link';
-import { useAuth } from '../context/AuthContext';
+import { useRouter } from 'next/router';
+import { AuthContext } from '../context/AuthContext';
 
 const Header: React.FC = () => {
-  const { isAuthenticated, logout, role } = useAuth();
+  const { isAuthenticated, logout } = useContext(AuthContext);
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push('/login');
+  };
 
   return (
     <header className="bg-blue-600 text-white p-4 shadow">
@@ -25,13 +32,13 @@ const Header: React.FC = () => {
             </>
           ) : (
             <>
-              {/* Only show "Add Job" if the user is an admin */}
-              {role === 'admin' && (
-                <Link href="/add-job" className="mr-4 hover:underline">
-                  Add Job
-                </Link>
-              )}
-              <button onClick={logout} className="hover:underline">
+
+              {/* Add Job link visible to all logged-in users */}
+              <Link href="/add-job" className="mr-4 hover:underline">
+                Add Job
+              </Link>
+
+              <button onClick={handleLogout} className="hover:underline">
                 Logout
               </button>
             </>
@@ -43,4 +50,3 @@ const Header: React.FC = () => {
 };
 
 export default Header;
-

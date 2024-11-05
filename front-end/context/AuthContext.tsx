@@ -34,23 +34,33 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const response = await axios.post('http://localhost:3000/auth/login', { email, password });
+      const response = await axios.post('http://localhost:3000/auth/login', {
+        email,
+        password,
+      });
+  
       const { token, role } = response.data;
-
       setIsAuthenticated(true);
       setToken(token);
       setRole(role);
-
+  
       // Save token and role to localStorage for persistence
       localStorage.setItem('token', token);
       localStorage.setItem('role', role);
-
-      // Redirect to homepage after successful login
+  
+      // Redirect to homepage
       router.push('/');
     } catch (error) {
       console.error("Login failed:", error);
+  
+      if (axios.isAxiosError(error) && error.response) {
+        // Log the error response from the server
+        console.log("Error response data:", error.response.data);
+        alert(error.response.data.message || 'Login failed. Please check your credentials.');
+      } else {
+        alert('An unexpected error occurred. Please try again later.');
+      }
     }
-    
   };
 
   const logout = () => {
