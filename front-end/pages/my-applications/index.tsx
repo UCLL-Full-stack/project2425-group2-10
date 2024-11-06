@@ -50,7 +50,7 @@ const JobApplicationsOverview: React.FC = () => {
   };  
 
   const discardJob = async (jobId: number) => {
-    if (!confirm('Are you sure you want to discard this job? This will delete the job and all associated applications. This action cannot be undone.')) {
+    if (!confirm('Are you sure you want to discard this job application? This will delete the job and all associated applications. This action cannot be undone.')) {
         return;
     }
 
@@ -60,8 +60,8 @@ const JobApplicationsOverview: React.FC = () => {
         setApplications(prevApps => prevApps.filter(app => app.jobId !== jobId));
         alert('Job and related applications discarded successfully.');
     } catch (err: any) {
-        alert(err.response?.data?.message || 'Failed to discard the job. Please try again.');
-        console.error('Error discarding job:', err);
+        alert(err.response?.data?.message || 'Failed to discard the job application. Please try again.');
+        console.error('Error discarding job application:', err);
     }
 };
 
