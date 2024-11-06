@@ -12,9 +12,12 @@ const Header: React.FC = () => {
             ApplyWise
           </Link>
         </div>
-        <div className="flex space-x-4">
+        <div className="flex space-x-8">
           <Link href="/" className="hover:text-gray-200">
             Home
+          </Link>
+          <Link href="/my-applications" className="hover:text-gray-200">
+            My Applications
           </Link>
           <Link href="/add-job" className="hover:text-gray-200">
             Add Job
