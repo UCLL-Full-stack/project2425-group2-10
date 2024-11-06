@@ -28,14 +28,14 @@ export const applicationRepository = {
         return applications;
     },
 
-    /**
+        /**
      * Retrieves an application by its ID.
      * @param id - The ID of the application.
      * @returns The application if found, otherwise undefined.
      */
-    getApplicationById: (id: number): Application | undefined => {
-        return applications.find(app => app.id === id);
-    },
+        getApplicationById: (id: number): Application | undefined => {
+            return applications.find(app => app.id === id);
+        },    
 
     /**
      * Retrieves applications by job ID.
@@ -44,6 +44,17 @@ export const applicationRepository = {
      */
     getApplicationsByJobId: (jobId: number): Application[] => 
         applications.filter((app) => app.jobId === jobId),
+
+        /**
+     * Deletes applications by job ID.
+     * @param jobId - The job's ID.
+     * @returns Number of applications deleted.
+     */
+    deleteApplicationsByJobId: (jobId: number): number => {
+        const initialLength = applications.length;
+        applications = applications.filter(app => app.jobId !== jobId);
+        return initialLength - applications.length;
+    },
 
     /**
      * Updates the status of an application.
@@ -59,4 +70,6 @@ export const applicationRepository = {
         application.status = status;
         return application;
     }
+
+
 };

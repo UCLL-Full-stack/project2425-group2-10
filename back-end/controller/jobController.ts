@@ -21,6 +21,10 @@ export const addJob = (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Missing required fields or invalid data.' });
     }
 
+    // Validate requiredSkills is an array with at least one skill
+    if (!Array.isArray(requiredSkills) || requiredSkills.length === 0) {
+      return res.status(400).json({ message: 'Please specify at least one required skill.' });
+    }
     // Optionally, validate date format, status value, etc.
 
     const newJobData: Omit<Job, 'id'> = {
@@ -102,4 +106,29 @@ export const applyForJob = (req: Request, res: Response) => {
     const application = applicationRepository.addApplication(newApplication);
 
     res.status(201).json({ message: 'Application submitted successfully.', application });
+};
+
+/**
+ * Deletes a job by its ID.
+ */
+export const deleteJob = (req: Request, res: Response) => {
+  const jobId = parseInt(req.params.id, 10);
+
+  if (isNaN(jobId)) {
+      return res.status(400).json({ message: 'Invalid job ID.' });
+  }
+
+  const job = jobRepository.getJobById(jobId);
+  if (!job) {
+      return res.status(404).json({ message: 'Job not found.' });
+  }
+
+  const deleted = jobRepository.deleteJob(jobId);
+  if (deleted) {
+      // Optionally, delete related applications
+      const deletedApplicationsCount = applicationRepository.deleteApplicationsByJobId(jobId);
+      return res.status(200).json({ message: `Job discarded successfully. Deleted ${deletedApplicationsCount} related application(s).` });
+  } else {
+      return res.status(500).json({ message: 'Failed to discard the job. Please try again.' });
+  }
 };

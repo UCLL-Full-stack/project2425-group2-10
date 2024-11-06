@@ -3,7 +3,7 @@
 import express from 'express';
 import multer from 'multer';
 import path from 'path';
-import { addJob, getJobs, applyForJob } from '../controller/jobController';
+import { addJob, getJobs, applyForJob, deleteJob } from '../controller/jobController';
 
 const router = express.Router();
 
@@ -178,5 +178,62 @@ router.post('/:id/apply', upload.fields([
   { name: 'resume', maxCount: 1 },
   { name: 'coverLetter', maxCount: 1 },
 ]), applyForJob);
+
+/**
+ * @swagger
+ * /jobs/{id}:
+ *   delete:
+ *     summary: Discard (delete) a specific job by ID
+ *     tags: [Jobs]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: number
+ *         description: The job ID to discard
+ *     responses:
+ *       200:
+ *         description: Job discarded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Job discarded successfully.
+ *       400:
+ *         description: Invalid job ID
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid job ID.
+ *       404:
+ *         description: Job not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Job not found.
+ *       500:
+ *         description: Failed to discard the job
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Failed to discard the job. Please try again.
+ */
+router.delete('/:id', deleteJob);
 
 export default router;

@@ -36,4 +36,18 @@ export const jobRepository = {
     getJobById: (id: number): Job | undefined => {
         return jobs.find(job => job.id === id);
     },
+
+        /**
+     * Deletes a job by its ID.
+     * @param id - The ID of the job to delete.
+     * @returns True if deletion was successful, otherwise false.
+     */
+        deleteJob: (id: number): boolean => {
+          const index = jobs.findIndex(job => job.id === id);
+          if (index !== -1) {
+              jobs.splice(index, 1);
+              return true;
+          }
+          return false;
+    },
 };
