@@ -24,6 +24,7 @@ const AddJob: React.FC = () => {
         requiredSkills: [],
     });
 
+    const [skillsInput, setSkillsInput] = useState<string>(''); // New state for skills as string
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const router = useRouter();
@@ -36,17 +37,19 @@ const AddJob: React.FC = () => {
         }));
     };
 
-    const handleSkillsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { value, checked } = e.target;
-        setJob(prev => {
-            const skills = prev.requiredSkills || [];
-            if (checked) {
-                return { ...prev, requiredSkills: [...skills, value] };
-            } else {
-                return { ...prev, requiredSkills: skills.filter(skill => skill !== value) };
-            }
-        });
-    };
+    const handleSkillsInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      const { value } = e.target;
+      setSkillsInput(value);
+      // Split skills by comma, bullet, or new line
+      const skillsArray = value
+          .split(/[\n,•]+/)
+          .map(skill => skill.trim())
+          .filter(skill => skill !== '');
+      setJob(prev => ({
+          ...prev,
+          requiredSkills: skillsArray,
+      }));
+  };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -62,11 +65,26 @@ const AddJob: React.FC = () => {
             return;
         }
 
+        if (!job.requiredSkills || job.requiredSkills.length === 0) {
+          setError('Please specify at least one required skill.');
+          return;
+        }
+
         try {
             const response = await axios.post('http://localhost:3000/jobs', job);
             setSuccess(response.data.message);
             // Optionally, redirect to another page
             // router.push('/jobs');
+            setJob({
+              companyName: '',
+              jobTitle: '',
+              date: '',
+              status: '',
+              description: '',
+              requiredSkills: [],
+          });
+            setSkillsInput('');
+
         } catch (err: any) {
             if (err.response && err.response.data && err.response.data.message) {
                 setError(err.response.data.message);
@@ -144,6 +162,8 @@ const AddJob: React.FC = () => {
                         >
                             <option value="">Select Status</option>
                             <option value="Open">Open</option>
+                            <option value="Paused">Paused</option>
+                            <option value="Filled">Filled</option>
                             <option value="Closed">Closed</option>
                         </select>
                     </div>
@@ -163,22 +183,26 @@ const AddJob: React.FC = () => {
                     </div>
 
                     <div className="mb-4">
-                        <span className="block text-gray-700 font-semibold mb-2">Required Skills</span>
-                        <div className="flex flex-wrap">
-                            {['JavaScript', 'TypeScript', 'React', 'Node.js', 'Express', 'MongoDB', 'Docker', 'Python', 'SQL', 'Data Visualization', 'Excel'].map(skill => (
-                                <label key={skill} className="mr-4 mb-2 flex items-center">
-                                    <input
-                                        type="checkbox"
-                                        name="requiredSkills"
-                                        value={skill}
-                                        checked={job.requiredSkills?.includes(skill) || false}
-                                        onChange={handleSkillsChange}
-                                        className="mr-2"
-                                    />
-                                    {skill}
-                                </label>
-                            ))}
-                        </div>
+                        <label htmlFor="requiredSkills" className="block text-gray-700 font-semibold mb-2">
+                            Required Skills<span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                            id="requiredSkills"
+                            name="requiredSkills"
+                            value={skillsInput}
+                            onChange={handleSkillsInputChange}
+                            placeholder="Enter skills separated by commas or bullets (•)"
+                            className={`w-full p-2 border ${
+                                error && 'border-red-500'
+                            } border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
+                            aria-describedby="requiredSkills-error"
+                            required
+                        ></textarea>
+                        {error && (
+                            <p id="requiredSkills-error" className="text-red-500 text-sm mt-1">
+                                {error}
+                            </p>
+                        )}
                     </div>
 
                     <button
