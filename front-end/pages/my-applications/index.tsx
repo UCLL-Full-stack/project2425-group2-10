@@ -5,6 +5,7 @@ import axios from 'axios';
 import Header from '@components/header';
 import { Application } from '@types';
 import Spinner from '@components/Spinner';
+import { XIcon } from '@heroicons/react/solid';
 
 const JobApplicationsOverview: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -64,37 +65,68 @@ if (loading) return <Spinner />;
 
 if (error) return <p className="text-red-500">{error}</p>;
 
-    return (
-        <div className="min-h-screen bg-gray-100">
-            <Header />
-            <main className="container mx-auto px-4 py-8">
-                <h1 className="text-3xl font-bold mb-6">My Applications</h1>
-                {applications.length === 0 ? (
-                    <p>No applications found.</p>
-                ) : (
-                    <div className="space-y-4">
-                        {applications.map(app => (
-                            <div key={app.id} className="bg-white p-6 rounded-lg shadow">
-                                <h2 className="text-xl font-semibold mb-2">{app.jobTitle} at {app.companyName}</h2>
-                                <p className="text-gray-600 mb-1"><strong>Applied On:</strong> {new Date(app.appliedAt).toLocaleDateString()}</p>
-                                <p className="text-gray-600 mb-1"><strong>Status:</strong> {app.status}</p>
-                                <div className="flex justify-between items-center">
-                                    <a href={app.resumeUrl} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">View Resume</a>
-                                    <a href={app.coverLetterUrl} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">View Cover Letter</a>
-                                    <button
-                                        onClick={() => discardJob(app.jobId)}
-                                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors"
-                                    >
-                                        Discard Job
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </main>
-        </div>
-    );
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <Header />
+      <main className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">My Job Applications</h1>
+        {loading ? (
+          <p>Loading job applications...</p>
+        ) : error ? (
+          <p className="text-red-500">{error}</p>
+        ) : applications.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {applications.map((application) => (
+              <div key={application.id} className="bg-white p-6 rounded-lg shadow flex flex-col justify-between relative">
+                {/* Discard X Icon */}
+                <button
+                  onClick={() => discardJob(application.id)}
+                  className="absolute top-2 right-2 text-gray-500 hover:text-red-500 focus:outline-none"
+                  aria-label="Discard Job"
+                >
+                  {/* X Icon SVG */}
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+                
+                <h2 className="text-xl font-semibold mb-2">{application.jobTitle}</h2>
+                <p className="text-gray-600 mb-2">
+                  <strong>Company:</strong> {application.companyName}
+                </p>
+                <p className="text-gray-800 mb-2">
+                  <strong>Applied on:</strong> {new Date(application.appliedAt).toLocaleDateString()}
+                </p>
+                <div className="mb-2">
+                  <label htmlFor={`status-${application.id}`} className="block text-gray-700 font-semibold mb-1">
+                    Application Status:
+                  </label>
+                  <select
+                    id={`status-${application.id}`}
+                    value={application.status}
+                    onChange={(e) => handleStatusChange(application.id, e.target.value as 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted')}
+                    className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="Applied">Applied</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Interviewing">Interviewing</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Accepted">Accepted</option>
+                  </select>
+                </div>
+                <div className="pt-3 flex justify-between items-center">
+                    <a href={application.resumeUrl} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">View Resume</a>
+                    <a href={application.coverLetterUrl} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">View Cover Letter</a>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>You haven't applied for any jobs yet.</p>
+        )}
+      </main>
+    </div>
+  );
 };
 
 export default JobApplicationsOverview;
