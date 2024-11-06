@@ -40,7 +40,8 @@ const HomePage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {jobs.map((job) => (
               <div key={job.id} className="bg-white p-6 rounded-lg shadow flex flex-col justify-between">
-                <div>
+                {/* Job Content */}
+                <div className="flex-grow">
                   <h2 className="text-2xl font-semibold mb-2">{job.jobTitle}</h2>
                   <p className="text-gray-600 mb-4">{job.companyName}</p>
                   <p className="text-gray-800">{job.description}</p>
@@ -56,8 +57,9 @@ const HomePage: React.FC = () => {
                     </p>
                   )}
                 </div>
-                <div className="mt-4">
-                  <Link href={`/apply/${job.id}`} className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
+                {/* Centered Apply Button at Bottom */}
+                <div className="mt-auto flex justify-center pt-4">
+                  <Link href={`/apply/${job.id}`} className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors">
                     Apply
                   </Link>
                 </div>
