@@ -52,6 +52,9 @@ const AddJob: React.FC = () => {
         e.preventDefault();
         setError(null);
         setSuccess(null);
+        setTimeout(() => {
+          router.push('/');
+        }, 2000);
 
         // Basic validation
         if (!job.companyName || !job.jobTitle || !job.date || !job.status) {
