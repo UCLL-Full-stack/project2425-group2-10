@@ -86,7 +86,7 @@ const ApplyPage: React.FC = () => {
       setSubmitSuccess('Application submitted successfully! Redirecting to job overview...');
       // Redirect after a short delay
       setTimeout(() => {
-        router.push('/');
+        router.push('/my-applications');
       }, 2000);
     } catch (error: any) {
       console.error('Error submitting application:', error);
@@ -138,7 +138,7 @@ const ApplyPage: React.FC = () => {
           <p className="text-red-500">{jobError}</p>
         ) : jobDetails ? (
           <div className="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
-            <h1 className="text-2xl font-bold mb-6 text-center">Apply for {jobDetails.jobTitle}</h1>
+            <h1 className="text-2xl font-bold mb-6 text-center">Apply for {jobDetails.jobTitle} at {jobDetails.companyName}</h1>
             {submitSuccess && (
               <div className="bg-green-100 text-green-800 p-3 rounded mb-4 text-center">
                 {submitSuccess}

@@ -17,12 +17,18 @@ export interface Admin {
     email: string;
 }
 
-export interface Application {
-    id: number;
+export type NewApplication = {
     jobId: number;
     applicantName: string;
     applicantEmail: string;
     resumeUrl: string;
     coverLetterUrl: string;
     appliedAt: string;
+    status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';
+    jobTitle: string;
+    companyName: string;
+};
+
+export interface Application extends NewApplication {
+    id: number;
 }

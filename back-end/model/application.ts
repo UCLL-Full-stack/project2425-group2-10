@@ -1,11 +1,33 @@
 // back-end/model/application.ts
 
-export interface Application {
-    id: number;
-    jobId: number;
-    applicantName: string;
-    applicantEmail: string;
-    resumeUrl: string; // Path to the uploaded resume
-    coverLetterUrl: string; // Path to the uploaded cover letter
-    appliedAt: string; // ISO date string
+import mongoose, { Document, Schema } from 'mongoose';
+
+export interface IApplication extends Document {
+  jobId: number;
+  applicantName: string;
+  applicantEmail: string;
+  resumeUrl: string;
+  coverLetterUrl: string;
+  appliedAt: string; // ISO date string
+  jobTitle?: string;
+  companyName?: string;
+  status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted'; // Status with allowed values
 }
+
+const ApplicationSchema: Schema = new Schema<IApplication>({
+  jobId: { type: Number, required: true },
+  applicantName: { type: String, required: true },
+  applicantEmail: { type: String, required: true },
+  resumeUrl: { type: String, required: true },
+  coverLetterUrl: { type: String, required: true },
+  appliedAt: { type: String, required: true },
+  jobTitle: { type: String },
+  companyName: { type: String },
+  status: {
+    type: String,
+    enum: ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'],
+    default: 'Applied',
+  },
+});
+
+export default mongoose.model<IApplication>('Application', ApplicationSchema);

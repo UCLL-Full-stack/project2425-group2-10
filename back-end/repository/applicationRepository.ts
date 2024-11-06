@@ -1,6 +1,6 @@
 // back-end/repository/applicationRepository.ts
 
-import { Application } from '../model/application';
+import { Application, NewApplication } from '../types';
 
 let applications: Application[] = [];
 let nextApplicationId = 1;
@@ -11,19 +11,52 @@ let nextApplicationId = 1;
 export const applicationRepository = {
     /**
      * Adds a new application to the repository.
-     * @param applicationData - Application details without the ID.
-     * @returns The newly added application with an assigned ID.
+     * @param applicationData - Application details.
+     * @returns The newly added application.
      */
-    addApplication: (applicationData: Omit<Application, 'id'>): Application => {
+    addApplication: (applicationData: NewApplication): Application => {
         const newApplication: Application = { ...applicationData, id: nextApplicationId++ };
         applications.push(newApplication);
         return newApplication;
     },
+
     /**
-     * Retrieves all applications for a specific job.
+     * Retrieves all applications.
+     * @returns An array of all applications.
+     */
+    getAllApplications: (): Application[] => {
+        return applications;
+    },
+
+    /**
+     * Retrieves an application by its ID.
+     * @param id - The ID of the application.
+     * @returns The application if found, otherwise undefined.
+     */
+    getApplicationById: (id: number): Application | undefined => {
+        return applications.find(app => app.id === id);
+    },
+
+    /**
+     * Retrieves applications by job ID.
      * @param jobId - The job's ID.
-     * @returns An array of applications.
+     * @returns An array of applications for the specified job.
      */
     getApplicationsByJobId: (jobId: number): Application[] => 
         applications.filter((app) => app.jobId === jobId),
+
+    /**
+     * Updates the status of an application.
+     * @param applicationId - The application's ID.
+     * @param status - The new status.
+     * @returns The updated application or null if not found.
+     */
+    updateApplicationStatus: (applicationId: number, status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted'): Application | null => {
+        const application = applications.find(app => app.id === applicationId);
+        if (!application) {
+            return null;
+        }
+        application.status = status;
+        return application;
+    }
 };

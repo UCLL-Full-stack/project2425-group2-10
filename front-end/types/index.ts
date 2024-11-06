@@ -1,4 +1,4 @@
-// front-end/types/index.ts
+// front-end/types/index.tsx
 
 export interface Job {
   id: number;
@@ -15,5 +15,17 @@ export interface Admin {
   id: number;
   name: string;
   email: string;
-  // Add more fields as needed, e.g., passwordHash
+}
+
+export interface Application {
+  id: number; // Must match the back-end's Application interface
+  jobId: number;
+  applicantName: string;
+  applicantEmail: string;
+  resumeUrl: string;
+  coverLetterUrl: string;
+  appliedAt: string;
+  status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';
+  jobTitle: string;
+  companyName: string;
 }
