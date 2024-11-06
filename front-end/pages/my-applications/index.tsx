@@ -6,11 +6,15 @@ import Header from '@components/header';
 import { Application } from '@types';
 import Spinner from '@components/Spinner';
 import { XIcon } from '@heroicons/react/solid';
+import Link from 'next/link';
 
 const JobApplicationsOverview: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [editingNotesId, setEditingNotesId] = useState<number | null>(null);
+  const [notes, setNotes] = useState<string>('');
+  const [notesError, setNotesError] = useState<string>('');
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -61,9 +65,47 @@ const JobApplicationsOverview: React.FC = () => {
     }
 };
 
-if (loading) return <Spinner />;
+  const startEditingNotes = (applicationId: number, currentNotes: string) => {
+    setEditingNotesId(applicationId);
+    setNotes(currentNotes || '');
+    setNotesError('');
+  };
 
-if (error) return <p className="text-red-500">{error}</p>;
+  const cancelEditingNotes = () => {
+    setEditingNotesId(null);
+    setNotes('');
+    setNotesError('');
+  };
+
+  const saveNotes = async (applicationId: number) => {
+    if (notes.trim().length === 0) {
+      setNotesError('Notes cannot be empty.');
+      return;
+    }
+
+    try {
+      // Update notes on the server
+      await axios.put(`http://localhost:3000/applications/${applicationId}/notes`, { notes });
+
+      // Update state locally
+      setApplications((prev) =>
+        prev.map((app) =>
+          app.id === applicationId ? { ...app, notes } : app
+        )
+      );
+
+      setEditingNotesId(null);
+      setNotes('');
+      setNotesError('');
+    } catch (error) {
+      console.error('Error updating notes:', error);
+      setNotesError('Failed to save notes. Please try again.');
+    }
+  };
+
+  if (loading) return <Spinner />;
+
+  if (error) return <p className="text-red-500">{error}</p>;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -117,6 +159,48 @@ if (error) return <p className="text-red-500">{error}</p>;
                 <div className="pt-3 flex justify-between items-center">
                     <a href={application.resumeUrl} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">View Resume</a>
                     <a href={application.coverLetterUrl} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">View Cover Letter</a>
+                </div>
+
+                {/* Notes Section */}
+                <div className="mt-4">
+                  {editingNotesId === application.id ? (
+                    <div>
+                      <textarea
+                        value={notes}
+                        onChange={(e) => setNotes(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter your notes here..."
+                      ></textarea>
+                      {notesError && <p className="text-red-500 text-sm mt-1">{notesError}</p>}
+                      <div className="flex justify-end space-x-2 mt-2">
+                        <button
+                          onClick={() => saveNotes(application.id)}
+                          className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition-colors"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={cancelEditingNotes}
+                          className="bg-gray-300 text-gray-700 px-3 py-1 rounded hover:bg-gray-400 transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <label htmlFor={`notes-${application.id}`} className="block text-gray-700 font-semibold mb-1">
+                        Notes:
+                      </label>
+                      <p className="text-gray-800 mb-2">{application.notes || 'No notes added.'}</p>
+                      <button
+                        onClick={() => startEditingNotes(application.id, application.notes || '')}
+                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors"
+                      >
+                        Add/Edit Notes
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}

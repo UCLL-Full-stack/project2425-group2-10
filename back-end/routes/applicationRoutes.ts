@@ -1,7 +1,7 @@
 // back-end/routes/applicationRoutes.ts
 
 import express from 'express';
-import { applyForJob, getAllApplications, updateApplicationStatus } from '../controller/applicationController';
+import { applyForJob, getAllApplications, updateApplicationStatus, updateApplicationNotes,  } from '../controller/applicationController';
 
 const router = express.Router();
 
@@ -175,5 +175,8 @@ router.put('/:id', updateApplicationStatus);
  *                   example: Job not found.
  */
 router.post('/jobs/:id/apply', applyForJob);
+
+// Update application notes
+router.put('/:id/notes', updateApplicationNotes);
 
 export default router;

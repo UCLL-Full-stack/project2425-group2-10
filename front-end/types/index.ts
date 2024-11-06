@@ -28,4 +28,5 @@ export interface Application {
   status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';
   jobTitle: string;
   companyName: string;
+  notes?: string; // Optional field for notes
 }

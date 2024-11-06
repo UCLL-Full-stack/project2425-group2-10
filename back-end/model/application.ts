@@ -12,6 +12,7 @@ export interface IApplication extends Document {
   jobTitle?: string;
   companyName?: string;
   status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted'; // Status with allowed values
+  notes: string;
 }
 
 const ApplicationSchema: Schema = new Schema<IApplication>({
@@ -28,6 +29,7 @@ const ApplicationSchema: Schema = new Schema<IApplication>({
     enum: ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'],
     default: 'Applied',
   },
+  notes: { type: String },
 });
 
 export default mongoose.model<IApplication>('Application', ApplicationSchema);

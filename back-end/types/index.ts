@@ -27,6 +27,7 @@ export type NewApplication = {
     status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';
     jobTitle: string;
     companyName: string;
+    notes?: string;
 };
 
 export interface Application extends NewApplication {

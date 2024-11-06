@@ -69,7 +69,21 @@ export const applicationRepository = {
         }
         application.status = status;
         return application;
-    }
+    },
 
+        /**
+     * Updates the notes of an application.
+     * @param applicationId - The application's ID.
+     * @param notes - The new notes.
+     * @returns The updated application or null if not found.
+     */
+    updateNotes: (applicationId: number, notes: string): Application | null => {
+        const application = applications.find(app => app.id === applicationId);
+        if (!application) {
+            return null;
+        }
+        application.notes = notes;
+        return application;
+    },
 
 };

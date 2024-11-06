@@ -103,3 +103,24 @@ export const updateApplicationStatus = (req: Request, res: Response) => {
 
     res.status(200).json({ message: 'Application status updated successfully.', application: updatedApplication });
 };
+
+export const updateApplicationNotes = (req: Request, res: Response) => {
+    const applicationId = parseInt(req.params.id, 10);
+    const { notes } = req.body;
+
+    if (isNaN(applicationId)) {
+        return res.status(400).json({ message: 'Invalid application ID.' });
+    }
+
+    if (typeof notes !== 'string') {
+        return res.status(400).json({ message: 'Notes must be a string.' });
+    }
+
+    const updatedApplication = applicationRepository.updateNotes(applicationId, notes);
+
+    if (!updatedApplication) {
+        return res.status(404).json({ message: 'Application not found.' });
+    }
+
+    res.status(200).json({ message: 'Notes updated successfully.', application: updatedApplication });
+};
