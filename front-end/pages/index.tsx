@@ -103,11 +103,11 @@ const HomePage: React.FC = () => {
           <p>No job opportunities available at the moment.</p>
         )}
         {/* Add a link to add a new job for convenience */}
-        <div className="mt-8 text-center">
+        {/* <div className="mt-8 text-center">
           <Link href="/add-job" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
             Add New Job
           </Link>
-        </div>
+        </div> */}
       </main>
     </div>
   );
