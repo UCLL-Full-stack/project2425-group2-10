@@ -1,7 +1,7 @@
 // back-end/routes/applicationRoutes.ts
 
 import express from 'express';
-import { applyForJob, getAllApplications, updateApplicationStatus, updateApplicationNotes,  } from '../controller/applicationController';
+import { applyForJob, getAllApplications, updateApplicationStatus, updateApplicationNotes, deleteApplication } from '../controller/applicationController';
 
 const router = express.Router();
 
@@ -176,7 +176,82 @@ router.put('/:id', updateApplicationStatus);
  */
 router.post('/jobs/:id/apply', applyForJob);
 
-// Update application notes
+/**
+ * @swagger
+ * /applications/{id}/notes:
+ *   put:
+ *     summary: Update the notes of a specific job application
+ *     tags: [Applications]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the application to update notes for
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - notes
+ *             properties:
+ *               notes:
+ *                 type: string
+ *                 description: The updated notes for the application
+ *     responses:
+ *       200:
+ *         description: Notes updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 application:
+ *                   $ref: '#/components/schemas/Application'
+ *       400:
+ *         description: Bad request (e.g., invalid input)
+ *       404:
+ *         description: Application not found
+ *       500:
+ *         description: Internal server error
+ */
 router.put('/:id/notes', updateApplicationNotes);
+
+/**
+ * @swagger
+ * /applications/{id}:
+ *   delete:
+ *     summary: Delete a specific job application by ID
+ *     tags: [Applications]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the application to delete
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Application deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Bad request (e.g., invalid ID)
+ *       404:
+ *         description: Application not found
+ *       500:
+ *         description: Internal server error
+ */
+router.delete('/:id/', deleteApplication);
 
 export default router;

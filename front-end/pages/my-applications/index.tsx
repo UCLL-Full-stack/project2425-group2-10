@@ -49,15 +49,15 @@ const JobApplicationsOverview: React.FC = () => {
     }
   };  
 
-  const discardJob = async (jobId: number) => {
+  const discardApplication = async (applicationId: number) => {
     if (!confirm('Are you sure you want to discard this job application? This will delete the job and all associated applications. This action cannot be undone.')) {
         return;
     }
 
     try {
-        await axios.delete(`http://localhost:3000/jobs/${jobId}`);
+        await axios.delete(`http://localhost:3000/applications/${applicationId}`);
         // Remove the job and its applications from the state
-        setApplications(prevApps => prevApps.filter(app => app.jobId !== jobId));
+        setApplications(prevApps => prevApps.filter(app => app.id !== applicationId));
         alert('Job and related applications discarded successfully.');
     } catch (err: any) {
         alert(err.response?.data?.message || 'Failed to discard the job application. Please try again.');
@@ -122,7 +122,7 @@ const JobApplicationsOverview: React.FC = () => {
               <div key={application.id} className="bg-white p-6 rounded-lg shadow flex flex-col justify-between relative">
                 {/* Discard X Icon */}
                 <button
-                  onClick={() => discardJob(application.id)}
+                  onClick={() => discardApplication(application.id)}
                   className="absolute top-2 right-2 text-gray-500 hover:text-red-500 focus:outline-none"
                   aria-label="Discard Job"
                 >

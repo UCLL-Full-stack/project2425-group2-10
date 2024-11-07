@@ -124,3 +124,27 @@ export const updateApplicationNotes = (req: Request, res: Response) => {
 
     res.status(200).json({ message: 'Notes updated successfully.', application: updatedApplication });
 };
+
+/**
+ * Deletes a specific job application by ID.
+ */
+export const deleteApplication = (req: Request, res: Response) => {
+    const applicationId = parseInt(req.params.id, 10);
+
+    if (isNaN(applicationId)) {
+        return res.status(400).json({ message: 'Invalid application ID.' });
+    }
+
+    const application = applicationRepository.getApplicationById(applicationId);
+    if (!application) {
+        return res.status(404).json({ message: 'Application not found.' });
+    }
+
+    // Remove the application from the repository
+    const success = applicationRepository.deleteApplication(applicationId);
+    if (success) {
+        return res.status(200).json({ message: 'Application deleted successfully.' });
+    } else {
+        return res.status(500).json({ message: 'Failed to delete the application. Please try again.' });
+    }
+};

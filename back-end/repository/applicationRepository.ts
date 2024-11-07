@@ -33,9 +33,9 @@ export const applicationRepository = {
      * @param id - The ID of the application.
      * @returns The application if found, otherwise undefined.
      */
-        getApplicationById: (id: number): Application | undefined => {
-            return applications.find(app => app.id === id);
-        },    
+    getApplicationById: (id: number): Application | undefined => {
+        return applications.find(app => app.id === id);
+    },    
 
     /**
      * Retrieves applications by job ID.
@@ -86,4 +86,14 @@ export const applicationRepository = {
         return application;
     },
 
+     /**
+     * Deletes an application by its ID.
+     * @param applicationId - The application's ID.
+     * @returns True if deletion was successful, otherwise false.
+     */
+     deleteApplication: (applicationId: number): boolean => {
+        const initialLength = applications.length;
+        applications = applications.filter(app => app.id !== applicationId);
+        return applications.length < initialLength;
+    },
 };
