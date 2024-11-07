@@ -85,6 +85,32 @@ export const getApplications = (req: Request, res: Response) => {
 };
 
 /**
+ * Handler to retrieve job applications by specific status.
+ */
+export const getApplicationsByStatus = (req: Request, res: Response) => {
+    const status = req.query.status as ApplicationStatus | undefined;
+
+    // Ensure the status query parameter is provided
+    if (!status) {
+        return res.status(400).json({ message: 'Status query parameter is required.' });
+    }
+
+    // Validate the status
+    const validStatuses: ApplicationStatus[] = ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Invalid status provided.' });
+    }
+
+    try {
+        const applications = applicationRepository.getAllApplications(status);
+        res.json(applications);
+    } catch (error) {
+        console.error('Error fetching applications by status:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
+};
+
+/**
  * Handler to update the status of an application.
  */
 export const updateApplicationStatus = (req: Request, res: Response) => {

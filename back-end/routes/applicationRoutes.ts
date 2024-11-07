@@ -4,6 +4,7 @@ import express from 'express';
 import { 
     applyForJob, 
     getApplications, 
+    getApplicationsByStatus,
     updateApplicationStatus, 
     updateApplicationNotes, 
     deleteApplication, 
@@ -48,6 +49,37 @@ const router = express.Router();
  *                   example: Failed to fetch job applications
  */
 router.get('/', getApplications);
+
+/**
+ * @swagger
+ * /applications/status:
+ *   get:
+ *     summary: Retrieve job applications by specific status
+ *     description: Retrieve a list of job applications filtered by a specific status.
+ *     tags: [Applications]
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [Applied, Pending, Interviewing, Rejected, Accepted]
+ *         required: true
+ *         description: The status to filter applications by
+ *     responses:
+ *       200:
+ *         description: A list of job applications with the specified status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Application'
+ *       400:
+ *         description: Missing or invalid status filter
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/status', getApplicationsByStatus);
 
 /**
  * @swagger

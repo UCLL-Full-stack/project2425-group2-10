@@ -33,6 +33,15 @@ export const applicationRepository = {
         return applications;
     },
 
+    /**
+     * Retrieves applications by specific status.
+     * @param status - The status to filter applications by.
+     * @returns An array of applications with the specified status.
+     */
+    getApplicationsByStatus: (status: ApplicationStatus): Application[] => {
+        return applications.filter(app => app.status.toLowerCase() === status.toLowerCase());
+    },
+
         /**
      * Retrieves an application by its ID.
      * @param id - The ID of the application.
