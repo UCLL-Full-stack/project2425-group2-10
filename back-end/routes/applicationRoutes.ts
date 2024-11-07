@@ -3,7 +3,7 @@
 import express from 'express';
 import { 
     applyForJob, 
-    getAllApplications, 
+    getApplications, 
     updateApplicationStatus, 
     updateApplicationNotes, 
     deleteApplication, 
@@ -47,7 +47,7 @@ const router = express.Router();
  *                   type: string
  *                   example: Failed to fetch job applications
  */
-router.get('/', getAllApplications);
+router.get('/', getApplications);
 
 /**
  * @swagger
@@ -392,5 +392,7 @@ router.put('/reminders/:reminderId', updateReminderController);
  *         description: Internal server error
  */
 router.delete('/reminders/:reminderId', deleteReminderController);
+
+
 
 export default router;

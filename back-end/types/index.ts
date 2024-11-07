@@ -17,6 +17,19 @@ export interface Admin {
     email: string;
 }
 
+export interface Application {
+    id: number;
+    jobTitle: string;
+    companyName: string;
+    appliedAt: string; // ISO string
+    status: ApplicationStatus;
+    resumeUrl: string;
+    coverLetterUrl: string;
+    jobId: number; // Assuming applications are associated with jobs
+    notes?: string;
+    reminder?: Reminder;
+}
+
 export type NewApplication = {
     jobId: number;
     applicantName: string;
@@ -24,7 +37,7 @@ export type NewApplication = {
     resumeUrl: string;
     coverLetterUrl: string;
     appliedAt: string;
-    status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';
+    status: ApplicationStatus;
     jobTitle: string;
     companyName: string;
     notes?: string;
@@ -40,3 +53,5 @@ export interface Reminder {
     reminderDate: string; // ISO date string
     message?: string; // Optional message for the reminder
 }
+
+export type ApplicationStatus = 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';

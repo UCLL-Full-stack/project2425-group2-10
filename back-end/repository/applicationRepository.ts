@@ -1,6 +1,6 @@
 // back-end/repository/applicationRepository.ts
 
-import { Application, NewApplication, Reminder } from '../types';
+import { Application, ApplicationStatus, NewApplication, Reminder } from '../types';
 
 let applications: Application[] = [];
 let reminders: Reminder[] = [];
@@ -22,10 +22,14 @@ export const applicationRepository = {
     },
 
     /**
-     * Retrieves all applications.
-     * @returns An array of all applications.
+     * Retrieves all applications, optionally filtered by status.
+     * @param status - Optional application status to filter by.
+     * @returns An array of applications matching the filter.
      */
-    getAllApplications: (): Application[] => {
+    getAllApplications: (status?: ApplicationStatus): Application[] => {
+        if (status) {
+            return applications.filter(app => app.status.toLowerCase() === status.toLowerCase());
+        }
         return applications;
     },
 
@@ -38,7 +42,7 @@ export const applicationRepository = {
         return applications.find(app => app.id === id);
     },    
 
-    /**
+  /**
      * Retrieves applications by job ID.
      * @param jobId - The job's ID.
      * @returns An array of applications for the specified job.
@@ -46,7 +50,7 @@ export const applicationRepository = {
     getApplicationsByJobId: (jobId: number): Application[] => 
         applications.filter((app) => app.jobId === jobId),
 
-        /**
+    /**
      * Deletes applications by job ID.
      * @param jobId - The job's ID.
      * @returns Number of applications deleted.
@@ -63,7 +67,7 @@ export const applicationRepository = {
      * @param status - The new status.
      * @returns The updated application or null if not found.
      */
-    updateApplicationStatus: (applicationId: number, status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted'): Application | null => {
+    updateApplicationStatus: (applicationId: number, status: ApplicationStatus): Application | null => {
         const application = applications.find(app => app.id === applicationId);
         if (!application) {
             return null;
@@ -87,14 +91,16 @@ export const applicationRepository = {
         return application;
     },
 
-     /**
+    /**
      * Deletes an application by its ID.
      * @param applicationId - The application's ID.
      * @returns True if deletion was successful, otherwise false.
      */
-     deleteApplication: (applicationId: number): boolean => {
+    deleteApplication: (applicationId: number): boolean => {
         const initialLength = applications.length;
         applications = applications.filter(app => app.id !== applicationId);
+        // Also remove associated reminder if exists
+        reminders = reminders.filter(rem => rem.applicationId !== applicationId);
         return applications.length < initialLength;
     },
 
@@ -161,4 +167,5 @@ export const applicationRepository = {
     getDueReminders: (currentDateTime: Date): Reminder[] => {
         return reminders.filter(rem => new Date(rem.reminderDate) <= currentDateTime);
     },
+
 };

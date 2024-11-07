@@ -3,7 +3,7 @@
 import { Request, Response } from 'express';
 import { applicationRepository } from '../repository/applicationRepository';
 import { jobRepository } from '../repository/jobRepository';
-import { Application, NewApplication, Reminder } from '../types';
+import { Application, ApplicationStatus, NewApplication, Reminder } from '../types';
 
 /**
  * Handles job application submissions.
@@ -67,10 +67,17 @@ export const applyForJob = (req: Request, res: Response) => {
 /**
  * Retrieves all job applications.
  */
-export const getAllApplications = (req: Request, res: Response) => {
+export const getApplications = (req: Request, res: Response) => {
+    const status = req.query.status as ApplicationStatus | undefined;
+
+    // Validate status if provided
+    const validStatuses: ApplicationStatus[] = ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'];
+    if (status && !validStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Invalid status filter provided.' });
+    }
     try {
-        const applications = applicationRepository.getAllApplications();
-        res.status(200).json(applications);
+        const applications = applicationRepository.getAllApplications(status);
+        res.json(applications);
     } catch (error) {
         console.error('Error fetching applications:', error);
         res.status(500).json({ message: 'Failed to fetch job applications' });
@@ -78,30 +85,28 @@ export const getAllApplications = (req: Request, res: Response) => {
 };
 
 /**
- * Updates the status of a specific job application.
+ * Handler to update the status of an application.
  */
 export const updateApplicationStatus = (req: Request, res: Response) => {
-    const { id } = req.params;
+    const applicationId = parseInt(req.params.id, 10);
     const { status } = req.body;
 
-    // Validate status input (ensure it matches allowed values)
-    const validStatuses = ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'];
-    if (!validStatuses.includes(status)) {
-        return res.status(400).json({ message: 'Invalid status value.' });
+    // Validate status
+    const validStatuses: ApplicationStatus[] = ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'];
+    if (!status || !validStatuses.includes(status)) {
+        return res.status(400).json({ message: 'Invalid or missing status.' });
     }
 
-    const applicationId = parseInt(id, 10);
-    if (isNaN(applicationId)) {
-        return res.status(400).json({ message: 'Invalid application ID.' });
+    try {
+        const updatedApplication = applicationRepository.updateApplicationStatus(applicationId, status);
+        if (!updatedApplication) {
+            return res.status(404).json({ message: 'Application not found.' });
+        }
+        res.json(updatedApplication);
+    } catch (error) {
+        console.error('Error updating application status:', error);
+        res.status(500).json({ message: 'Internal server error.' });
     }
-
-    const updatedApplication = applicationRepository.updateApplicationStatus(applicationId, status as 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted');
-
-    if (!updatedApplication) {
-        return res.status(404).json({ message: 'Application not found.' });
-    }
-
-    res.status(200).json({ message: 'Application status updated successfully.', application: updatedApplication });
 };
 
 export const updateApplicationNotes = (req: Request, res: Response) => {

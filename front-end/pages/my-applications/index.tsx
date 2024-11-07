@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Header from '@components/header';
-import { Application, Reminder } from '@types';
+import { Application, Reminder, ApplicationStatus } from '@types';
 import Spinner from '@components/Spinner';
 import { XIcon } from '@heroicons/react/solid';
 import Link from 'next/link';
@@ -13,6 +13,7 @@ import Modal from '@components/Modal'; // Assume you have a Modal component
 import DatePicker from 'react-datepicker'; // Date picker library
 import 'react-datepicker/dist/react-datepicker.css';
 
+const statusOptions: (ApplicationStatus | 'All')[] = ['All', 'Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'];
 
 const JobApplicationsOverview: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -22,6 +23,7 @@ const JobApplicationsOverview: React.FC = () => {
   const [notes, setNotes] = useState<string>('');
   const [notesError, setNotesError] = useState<string>('');
   const [savingNotesId, setSavingNotesId] = useState<number | null>(null);
+  const [filterStatus, setFilterStatus] = useState<ApplicationStatus | 'All'>('All');
 
     // Modal States for Reminders
     const [isReminderModalOpen, setIsReminderModalOpen] = useState<boolean>(false);
@@ -32,8 +34,14 @@ const JobApplicationsOverview: React.FC = () => {
 
   useEffect(() => {
     const fetchApplications = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        const response = await axios.get<Application[]>('http://localhost:3000/applications');
+        const params: Record<string, string> = {};
+        if (filterStatus !== 'All') {
+          params.status = filterStatus;
+        }
+        const response = await axios.get<Application[]>('http://localhost:3000/applications', { params });
         setApplications(response.data);
       } catch (error) {
         console.error('Error fetching applications:', error);
@@ -44,23 +52,25 @@ const JobApplicationsOverview: React.FC = () => {
     };
 
     fetchApplications();
-  }, []);
+  }, [filterStatus]);
 
-  const handleStatusChange = async (applicationId: number, newStatus: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted') => {
-    try {
-      // Update status on the server
-      await axios.put(`http://localhost:3000/applications/${applicationId}`, { status: newStatus });
-      
-      // Update state locally
-      setApplications((prev) =>
-        prev.map((app) =>
-          app.id === applicationId ? { ...app, status: newStatus } : app
-        )
-      );
-    } catch (error) {
-      console.error('Error updating application status:', error);
-      setError('Failed to update status. Please try again.');
-    }
+    // Handle Status Change in Application
+    const handleStatusChange = async (
+      applicationId: number,
+      newStatus: ApplicationStatus
+  ) => {
+      try {
+          await axios.put(`http://localhost:3000/applications/${applicationId}`, { status: newStatus });
+          setApplications((prev) =>
+              prev.map((app) =>
+                  app.id === applicationId ? { ...app, status: newStatus } : app
+              )
+          );
+          toast.success('Application status updated successfully.');
+      } catch (error) {
+          console.error('Error updating application status:', error);
+          toast.error('Failed to update status. Please try again.');
+      }
   };  
 
   const discardApplication = async (applicationId: number) => {
@@ -227,6 +237,24 @@ const JobApplicationsOverview: React.FC = () => {
       <Header />
       <main className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-bold mb-6">My Job Applications</h1>
+
+        {/* Filter Section */}
+        <div className="flex items-center mb-6">
+          <label htmlFor="statusFilter" className="mr-2 font-semibold text-gray-700">
+            Filter by Status:
+          </label>
+          <select
+            id="statusFilter"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value as ApplicationStatus | 'All')}
+            className="p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {statusOptions.map(status => (
+              <option key={status} value={status}>{status}</option>
+            ))}
+          </select>
+        </div>
+
         {loading ? (
           <p>Loading job applications...</p>
         ) : error ? (
@@ -261,14 +289,12 @@ const JobApplicationsOverview: React.FC = () => {
                   <select
                     id={`status-${application.id}`}
                     value={application.status}
-                    onChange={(e) => handleStatusChange(application.id, e.target.value as 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted')}
+                    onChange={(e) => handleStatusChange(application.id, e.target.value as ApplicationStatus)}
                     className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option value="Applied">Applied</option>
-                    <option value="Pending">Pending</option>
-                    <option value="Interviewing">Interviewing</option>
-                    <option value="Rejected">Rejected</option>
-                    <option value="Accepted">Accepted</option>
+                    {statusOptions.slice(1).map(status => (
+                        <option key={status} value={status}>{status}</option>
+                    ))}
                   </select>
                 </div>
                 <div className="pt-3 flex justify-between items-center">

@@ -25,7 +25,7 @@ export interface Application {
   resumeUrl: string;
   coverLetterUrl: string;
   appliedAt: string;
-  status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';
+  status: ApplicationStatus;
   jobTitle: string;
   companyName: string;
   notes?: string; // Optional field for notes
@@ -38,3 +38,6 @@ export interface Reminder {
   reminderDate: string; // ISO date string
   message?: string;
 }
+
+export type ApplicationStatus = 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';
+
