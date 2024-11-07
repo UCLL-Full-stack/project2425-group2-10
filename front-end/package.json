@@ -6,6 +6,7 @@
     "start": "npm run dev"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^1.0.6",
     "@hookform/resolvers": "^3.9.1",
     "axios": "^1.7.7",
