@@ -318,7 +318,7 @@ const JobApplicationsOverview: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => openReminderModal(application.id, application.reminder)}
-                      className="flex items-center bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors focus:outline-none"
+                      className="flex items-center bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors focus:outline-none"
                     >
                       {/* Calendar Icon SVG */}
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -363,7 +363,7 @@ const JobApplicationsOverview: React.FC = () => {
                       <p className="text-gray-800 mb-2">{application.notes || 'No notes added.'}</p>
                       <button
                         onClick={() => startEditingNotes(application.id, application.notes || '')}
-                        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors"
+                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition-colors"
                       >
                         Add/Edit Notes
                       </button>
