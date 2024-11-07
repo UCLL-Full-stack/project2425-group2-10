@@ -363,7 +363,7 @@ const JobApplicationsOverview: React.FC = () => {
                       <p className="text-gray-800 mb-2">{application.notes || 'No notes added.'}</p>
                       <button
                         onClick={() => startEditingNotes(application.id, application.notes || '')}
-                        className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition-colors"
+                        className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition-colors"
                       >
                         Add/Edit Notes
                       </button>
