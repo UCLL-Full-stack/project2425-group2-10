@@ -246,17 +246,6 @@ const JobApplicationsOverview: React.FC = () => {
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
                 </button>
-
-                 {/* Reminder Icon */}
-                <button
-                  onClick={() => openReminderModal(application.id, application.reminder)}
-                  className="absolute top-2 left-2 text-gray-500 hover:text-blue-500 focus:outline-none"
-                  aria-label="Set Reminder"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </button>
                 
                 <h2 className="text-xl font-semibold mb-2">{application.jobTitle}</h2>
                 <p className="text-gray-600 mb-2">
@@ -285,6 +274,59 @@ const JobApplicationsOverview: React.FC = () => {
                 <div className="pt-3 flex justify-between items-center">
                     <a href={application.resumeUrl} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">View Resume</a>
                     <a href={application.coverLetterUrl} className="text-blue-500 hover:underline" target="_blank" rel="noopener noreferrer">View Cover Letter</a>
+                </div>
+
+
+                {/* Set Reminder Button or Reminder Details */}
+                <div className="mt-4">
+                  {application.reminder ? (
+                    <div className="p-2 border border-blue-300 rounded bg-blue-50">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <p className="text-blue-700 font-semibold">Reminder:</p>
+                          <p className="text-blue-600">
+                            {new Date(application.reminder.reminderDate).toLocaleString()}
+                          </p>
+                          {application.reminder.message && (
+                            <p className="text-blue-600 italic">{application.reminder.message}</p>
+                          )}
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => openReminderModal(application.id, application.reminder)}
+                            className="text-gray-500 hover:text-green-500 focus:outline-none"
+                            aria-label="Edit Reminder"
+                          >
+                            {/* Pencil Icon SVG */}
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => deleteReminder(application.id)}
+                            className="text-gray-500 hover:text-red-500 focus:outline-none"
+                            aria-label="Delete Reminder"
+                          >
+                            {/* Trash Icon SVG */}
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v1H5m16 0h-1V3a1 1 0 00-1-1h-4a1 1 0 00-1 1v1h-1" clipRule="evenodd" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => openReminderModal(application.id, application.reminder)}
+                      className="flex items-center bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors focus:outline-none"
+                    >
+                      {/* Calendar Icon SVG */}
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      Set Reminder
+                    </button>
+                  )}
                 </div>
 
                 {/* Notes Section */}
@@ -328,45 +370,6 @@ const JobApplicationsOverview: React.FC = () => {
                     </div>
                   )}
                 </div>
-
-                {/* Reminder Details */}
-                {application.reminder && (
-                  <div className="mt-4 p-2 border border-blue-300 rounded bg-blue-50">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="text-blue-700 font-semibold">Reminder:</p>
-                        <p className="text-blue-600">
-                          {new Date(application.reminder.reminderDate).toLocaleString()}
-                        </p>
-                        {application.reminder.message && (
-                          <p className="text-blue-600 italic">{application.reminder.message}</p>
-                        )}
-                      </div>
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => openReminderModal(application.id, application.reminder)}
-                          className="text-gray-500 hover:text-green-500 focus:outline-none"
-                          aria-label="Edit Reminder"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                          </svg>
-
-                        </button>
-                        <button
-                          onClick={() => deleteReminder(application.id)}
-                          className="text-gray-500 hover:text-red-500 focus:outline-none"
-                          aria-label="Delete Reminder"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-  <path fill-rule="evenodd" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v1H5m16 0h-1V3a1 1 0 00-1-1h-4a1 1 0 00-1 1v1h-1" clip-rule="evenodd" />
-                          </svg>
-
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
               </div>
             ))}
