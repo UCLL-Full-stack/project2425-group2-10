@@ -29,4 +29,12 @@ export interface Application {
   jobTitle: string;
   companyName: string;
   notes?: string; // Optional field for notes
+  reminder?: Reminder;
+}
+
+export interface Reminder {
+  id: number;
+  applicationId: number;
+  reminderDate: string; // ISO date string
+  message?: string;
 }

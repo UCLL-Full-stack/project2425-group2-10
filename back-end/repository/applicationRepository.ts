@@ -1,10 +1,11 @@
 // back-end/repository/applicationRepository.ts
 
-import { Application, NewApplication } from '../types';
+import { Application, NewApplication, Reminder } from '../types';
 
 let applications: Application[] = [];
+let reminders: Reminder[] = [];
 let nextApplicationId = 1;
-
+let nextReminderId = 1;
 /**
  * Repository for managing job applications.
  */
@@ -95,5 +96,69 @@ export const applicationRepository = {
         const initialLength = applications.length;
         applications = applications.filter(app => app.id !== applicationId);
         return applications.length < initialLength;
+    },
+
+    /**
+     * Adds a reminder to an application.
+     * @param applicationId - The application's ID.
+     * @param reminderDate - The date and time for the reminder.
+     * @param message - Optional message for the reminder.
+     * @returns The newly added reminder.
+     */
+    addReminder: (applicationId: number, reminderDate: string, message?: string): Reminder | null => {
+        const application = applications.find(app => app.id === applicationId);
+        if (!application) {
+            return null;
+        }
+        const newReminder: Reminder = { id: nextReminderId++, applicationId, reminderDate, message };
+        reminders.push(newReminder);
+        return newReminder;
+    },
+
+    /**
+     * Updates a reminder.
+     * @param reminderId - The ID of the reminder to update.
+     * @param reminderDate - The new date and time for the reminder.
+     * @param message - The new message for the reminder.
+     * @returns The updated reminder or null if not found.
+     */
+    updateReminder: (reminderId: number, reminderDate: string, message?: string): Reminder | null => {
+        const reminder = reminders.find(rem => rem.id === reminderId);
+        if (!reminder) {
+            return null;
+        }
+        reminder.reminderDate = reminderDate;
+        if (message !== undefined) {
+            reminder.message = message;
+        }
+        return reminder;
+    },
+
+    /**
+     * Deletes a reminder by its ID.
+     * @param reminderId - The ID of the reminder to delete.
+     * @returns True if deletion was successful, otherwise false.
+     */
+    deleteReminder: (reminderId: number): boolean => {
+        const initialLength = reminders.length;
+        reminders = reminders.filter(rem => rem.id !== reminderId);
+        return reminders.length < initialLength;
+    },
+
+    /**
+     * Retrieves all reminders.
+     * @returns An array of all reminders.
+     */
+    getAllReminders: (): Reminder[] => {
+        return reminders;
+    },
+
+    /**
+     * Retrieves due reminders based on the current date and time.
+     * @param currentDateTime - The current date and time.
+     * @returns An array of due reminders.
+     */
+    getDueReminders: (currentDateTime: Date): Reminder[] => {
+        return reminders.filter(rem => new Date(rem.reminderDate) <= currentDateTime);
     },
 };

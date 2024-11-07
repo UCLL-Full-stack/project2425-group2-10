@@ -3,10 +3,16 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import Header from '@components/header';
-import { Application } from '@types';
+import { Application, Reminder } from '@types';
 import Spinner from '@components/Spinner';
 import { XIcon } from '@heroicons/react/solid';
 import Link from 'next/link';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import Modal from '@components/Modal'; // Assume you have a Modal component
+import DatePicker from 'react-datepicker'; // Date picker library
+import 'react-datepicker/dist/react-datepicker.css';
+
 
 const JobApplicationsOverview: React.FC = () => {
   const [applications, setApplications] = useState<Application[]>([]);
@@ -15,6 +21,14 @@ const JobApplicationsOverview: React.FC = () => {
   const [editingNotesId, setEditingNotesId] = useState<number | null>(null);
   const [notes, setNotes] = useState<string>('');
   const [notesError, setNotesError] = useState<string>('');
+  const [savingNotesId, setSavingNotesId] = useState<number | null>(null);
+
+    // Modal States for Reminders
+    const [isReminderModalOpen, setIsReminderModalOpen] = useState<boolean>(false);
+    const [currentReminderApplicationId, setCurrentReminderApplicationId] = useState<number | null>(null);
+    const [reminderDate, setReminderDate] = useState<Date | null>(null);
+    const [reminderMessage, setReminderMessage] = useState<string>('');
+    const [reminderError, setReminderError] = useState<string>('');
 
   useEffect(() => {
     const fetchApplications = async () => {
@@ -83,6 +97,8 @@ const JobApplicationsOverview: React.FC = () => {
       return;
     }
 
+    setSavingNotesId(applicationId);
+
     try {
       // Update notes on the server
       await axios.put(`http://localhost:3000/applications/${applicationId}/notes`, { notes });
@@ -102,6 +118,105 @@ const JobApplicationsOverview: React.FC = () => {
       setNotesError('Failed to save notes. Please try again.');
     }
   };
+
+    // Open Reminder Modal
+    const openReminderModal = (applicationId: number, existingReminder?: Reminder) => {
+      setCurrentReminderApplicationId(applicationId);
+      if (existingReminder) {
+        setReminderDate(new Date(existingReminder.reminderDate));
+        setReminderMessage(existingReminder.message || '');
+      } else {
+        setReminderDate(null);
+        setReminderMessage('');
+      }
+      setReminderError('');
+      setIsReminderModalOpen(true);
+    };
+    
+    // Close Reminder Modal
+    const closeReminderModal = () => {
+      setIsReminderModalOpen(false);
+      setCurrentReminderApplicationId(null);
+      setReminderDate(null);
+      setReminderMessage('');
+      setReminderError('');
+    };
+    
+    // Save Reminder
+    const saveReminder = async () => {
+      if (!currentReminderApplicationId || !reminderDate) {
+        setReminderError('Please select a valid reminder date and time.');
+        return;
+      }
+      
+      const isoDate = reminderDate.toISOString();
+      
+      try {
+        // Check if application already has a reminder
+        const application = applications.find(app => app.id === currentReminderApplicationId);
+        if (application?.reminder) {
+          // Update existing reminder
+          await axios.put(`http://localhost:3000/applications/reminders/${application.reminder.id}`, {
+            reminderDate: isoDate,
+            message: reminderMessage,
+          });
+          setApplications(prev =>
+            prev.map(app =>
+              app.id === currentReminderApplicationId
+                ? { ...app, reminder: { ...app.reminder!, reminderDate: isoDate, message: reminderMessage } }
+                : app
+            )
+          );
+          toast.success('Reminder updated successfully.');
+        } else {
+          // Set new reminder
+          const response = await axios.post(`http://localhost:3000/applications/${currentReminderApplicationId}/reminder`, {
+            reminderDate: isoDate,
+            message: reminderMessage,
+          });
+          const newReminder: Reminder = response.data.reminder;
+          setApplications(prev =>
+            prev.map(app =>
+              app.id === currentReminderApplicationId
+                ? { ...app, reminder: newReminder }
+                : app
+            )
+          );
+          toast.success('Reminder set successfully.');
+        }
+        closeReminderModal();
+      } catch (error: any) {
+        console.error('Error setting/updating reminder:', error);
+        setReminderError('Failed to set/update reminder. Please try again.');
+        toast.error('Failed to set/update reminder. Please try again.');
+      }
+    };
+    
+    // Delete Reminder
+    const deleteReminder = async (applicationId: number) => {
+      if (!confirm('Are you sure you want to delete this reminder?')) {
+        return;
+      }
+
+      try {
+        const application = applications.find(app => app.id === applicationId);
+        if (!application?.reminder) {
+          toast.error('No reminder found to delete.');
+          return;
+        }
+
+        await axios.delete(`http://localhost:3000/applications/reminders/${application.reminder.id}`);
+        setApplications(prev =>
+          prev.map(app =>
+            app.id === applicationId ? { ...app, reminder: undefined } : app
+          )
+        );
+        toast.success('Reminder deleted successfully.');
+      } catch (error) {
+        console.error('Error deleting reminder:', error);
+        toast.error('Failed to delete reminder. Please try again.');
+      }
+    };
 
   if (loading) return <Spinner />;
 
@@ -129,6 +244,17 @@ const JobApplicationsOverview: React.FC = () => {
                   {/* X Icon SVG */}
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </button>
+
+                 {/* Reminder Icon */}
+                <button
+                  onClick={() => openReminderModal(application.id, application.reminder)}
+                  className="absolute top-2 left-2 text-gray-500 hover:text-blue-500 focus:outline-none"
+                  aria-label="Set Reminder"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </button>
                 
@@ -202,6 +328,46 @@ const JobApplicationsOverview: React.FC = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Reminder Details */}
+                {application.reminder && (
+                  <div className="mt-4 p-2 border border-blue-300 rounded bg-blue-50">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <p className="text-blue-700 font-semibold">Reminder:</p>
+                        <p className="text-blue-600">
+                          {new Date(application.reminder.reminderDate).toLocaleString()}
+                        </p>
+                        {application.reminder.message && (
+                          <p className="text-blue-600 italic">{application.reminder.message}</p>
+                        )}
+                      </div>
+                      <div className="flex space-x-2">
+                        <button
+                          onClick={() => openReminderModal(application.id, application.reminder)}
+                          className="text-gray-500 hover:text-green-500 focus:outline-none"
+                          aria-label="Edit Reminder"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+  <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                          </svg>
+
+                        </button>
+                        <button
+                          onClick={() => deleteReminder(application.id)}
+                          className="text-gray-500 hover:text-red-500 focus:outline-none"
+                          aria-label="Delete Reminder"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+  <path fill-rule="evenodd" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v1H5m16 0h-1V3a1 1 0 00-1-1h-4a1 1 0 00-1 1v1h-1" clip-rule="evenodd" />
+                          </svg>
+
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               </div>
             ))}
           </div>
@@ -209,6 +375,53 @@ const JobApplicationsOverview: React.FC = () => {
           <p>You haven't applied for any jobs yet.</p>
         )}
       </main>
+
+      {/* Reminder Modal */}
+      {isReminderModalOpen && (
+        <Modal onClose={closeReminderModal}>
+          <h2 className="text-xl font-bold mb-4">Set Reminder</h2>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">Reminder Date & Time:</label>
+            <DatePicker
+              selected={reminderDate}
+              onChange={(date: Date) => setReminderDate(date)}
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              dateFormat="MMMM d, yyyy h:mm aa"
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholderText="Select date and time"
+            />
+          </div>
+          <div className="mb-4">
+            <label className="block text-gray-700 font-semibold mb-2">Message (Optional):</label>
+            <textarea
+              value={reminderMessage}
+              onChange={(e) => setReminderMessage(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter a message for your reminder"
+            ></textarea>
+          </div>
+          {reminderError && <p className="text-red-500 mb-2">{reminderError}</p>}
+          <div className="flex justify-end space-x-2">
+            <button
+              onClick={saveReminder}
+              className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
+            >
+              Save
+            </button>
+            <button
+              onClick={closeReminderModal}
+              className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Toast Container */}
+      <ToastContainer position="top-right" autoClose={5000} hideProgressBar={false} newestOnTop closeOnClick pauseOnFocusLoss draggable pauseOnHover />
     </div>
   );
 };

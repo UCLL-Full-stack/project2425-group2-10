@@ -1,7 +1,16 @@
 // back-end/routes/applicationRoutes.ts
 
 import express from 'express';
-import { applyForJob, getAllApplications, updateApplicationStatus, updateApplicationNotes, deleteApplication } from '../controller/applicationController';
+import { 
+    applyForJob, 
+    getAllApplications, 
+    updateApplicationStatus, 
+    updateApplicationNotes, 
+    deleteApplication, 
+    setReminder,
+    updateReminderController, 
+    deleteReminderController 
+} from '../controller/applicationController'; 
 
 const router = express.Router();
 
@@ -253,5 +262,135 @@ router.put('/:id/notes', updateApplicationNotes);
  *         description: Internal server error
  */
 router.delete('/:id/', deleteApplication);
+
+/**
+ * @swagger
+ * /applications/{id}/reminder:
+ *   post:
+ *     summary: Set a reminder for a specific job application
+ *     tags: [Applications]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: ID of the application to set a reminder for
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reminderDate
+ *             properties:
+ *               reminderDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: The date and time for the reminder in ISO format
+ *               message:
+ *                 type: string
+ *                 description: Optional message for the reminder
+ *     responses:
+ *       201:
+ *         description: Reminder set successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 reminder:
+ *                   $ref: '#/components/schemas/Reminder'
+ *       400:
+ *         description: Bad request (e.g., invalid input)
+ *       404:
+ *         description: Application not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post('/:id/reminder', setReminder);
+
+/**
+ * @swagger
+ * /applications/reminders/{reminderId}:
+ *   put:
+ *     summary: Update a specific reminder
+ *     tags: [Applications]
+ *     parameters:
+ *       - in: path
+ *         name: reminderId
+ *         required: true
+ *         description: ID of the reminder to update
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - reminderDate
+ *             properties:
+ *               reminderDate:
+ *                 type: string
+ *                 format: date-time
+ *                 description: The new date and time for the reminder in ISO format
+ *               message:
+ *                 type: string
+ *                 description: The new message for the reminder
+ *     responses:
+ *       200:
+ *         description: Reminder updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 reminder:
+ *                   $ref: '#/components/schemas/Reminder'
+ *       400:
+ *         description: Bad request (e.g., invalid input)
+ *       404:
+ *         description: Reminder not found
+ *       500:
+ *         description: Internal server error
+ */
+router.put('/reminders/:reminderId', updateReminderController);
+
+/**
+ * @swagger
+ * /applications/reminders/{reminderId}:
+ *   delete:
+ *     summary: Delete a specific reminder
+ *     tags: [Applications]
+ *     parameters:
+ *       - in: path
+ *         name: reminderId
+ *         required: true
+ *         description: ID of the reminder to delete
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Reminder deleted successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       404:
+ *         description: Reminder not found
+ *       500:
+ *         description: Internal server error
+ */
+router.delete('/reminders/:reminderId', deleteReminderController);
 
 export default router;

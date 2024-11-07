@@ -5,6 +5,7 @@ import type { AppProps } from 'next/app';
 import { AuthProvider } from '../context/AuthContext';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import 'react-datepicker/dist/react-datepicker.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (

@@ -33,3 +33,10 @@ export type NewApplication = {
 export interface Application extends NewApplication {
     id: number;
 }
+
+export interface Reminder {
+    id: number;
+    applicationId: number;
+    reminderDate: string; // ISO date string
+    message?: string; // Optional message for the reminder
+}

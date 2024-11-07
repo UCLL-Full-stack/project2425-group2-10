@@ -3,7 +3,7 @@
 import { Request, Response } from 'express';
 import { applicationRepository } from '../repository/applicationRepository';
 import { jobRepository } from '../repository/jobRepository';
-import { Application, NewApplication } from '../types';
+import { Application, NewApplication, Reminder } from '../types';
 
 /**
  * Handles job application submissions.
@@ -146,5 +146,69 @@ export const deleteApplication = (req: Request, res: Response) => {
         return res.status(200).json({ message: 'Application deleted successfully.' });
     } else {
         return res.status(500).json({ message: 'Failed to delete the application. Please try again.' });
+    }
+};
+
+/**
+ * Sets a reminder for a specific job application.
+ */
+export const setReminder = (req: Request, res: Response) => {
+    const applicationId = parseInt(req.params.id, 10);
+    const { reminderDate, message } = req.body;
+
+    if (isNaN(applicationId)) {
+        return res.status(400).json({ message: 'Invalid application ID.' });
+    }
+
+    if (!reminderDate || isNaN(Date.parse(reminderDate))) {
+        return res.status(400).json({ message: 'Invalid or missing reminderDate. It should be a valid ISO date string.' });
+    }
+
+    const newReminder = applicationRepository.addReminder(applicationId, reminderDate, message);
+    if (!newReminder) {
+        return res.status(404).json({ message: 'Application not found. Cannot set reminder.' });
+    }
+
+    res.status(201).json({ message: 'Reminder set successfully.', reminder: newReminder });
+};
+
+/**
+ * Updates a reminder for a specific job application.
+ */
+export const updateReminderController = (req: Request, res: Response) => {
+    const reminderId = parseInt(req.params.reminderId, 10);
+    const { reminderDate, message } = req.body;
+
+    if (isNaN(reminderId)) {
+        return res.status(400).json({ message: 'Invalid reminder ID.' });
+    }
+
+    if (!reminderDate || isNaN(Date.parse(reminderDate))) {
+        return res.status(400).json({ message: 'Invalid or missing reminderDate. It should be a valid ISO date string.' });
+    }
+
+    const updatedReminder = applicationRepository.updateReminder(reminderId, reminderDate, message);
+    if (!updatedReminder) {
+        return res.status(404).json({ message: 'Reminder not found.' });
+    }
+
+    res.status(200).json({ message: 'Reminder updated successfully.', reminder: updatedReminder });
+};
+
+/**
+ * Deletes a reminder for a specific job application.
+ */
+export const deleteReminderController = (req: Request, res: Response) => {
+    const reminderId = parseInt(req.params.reminderId, 10);
+
+    if (isNaN(reminderId)) {
+        return res.status(400).json({ message: 'Invalid reminder ID.' });
+    }
+
+    const success = applicationRepository.deleteReminder(reminderId);
+    if (success) {
+        return res.status(200).json({ message: 'Reminder deleted successfully.' });
+    } else {
+        return res.status(404).json({ message: 'Reminder not found.' });
     }
 };

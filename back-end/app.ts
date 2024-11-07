@@ -9,9 +9,11 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import applicationRoutes from './routes/applicationRoutes';
+import { applicationRepository } from './repository/applicationRepository';
 import jobRoutes from './routes/jobRoutes';
 import './util/seed';
-
+import { Reminder } from './types';
+import cron from 'node-cron';
 // Optional: Seed initial data
 // import './util/seed';
 
@@ -85,11 +87,24 @@ const swaggerDefinition = {
                     status: { type: 'string', enum: ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'] },
                     jobTitle: { type: 'string' },
                     companyName: { type: 'string' },
+                    notes: { type: 'string' },
+                    reminder: { $ref: '#/components/schemas/Reminder' },
                 },
                 required: ['id', 'jobId', 'applicantName', 'applicantEmail', 'resumeUrl', 'coverLetterUrl', 'appliedAt', 'status', 'jobTitle', 'companyName'],
             },
+
+            Reminder: {
+                type: 'object',
+                properties: {
+                  id: { type: 'integer' },
+                  applicationId: { type: 'integer' },
+                  reminderDate: { type: 'string', format: 'date-time' },
+                  message: { type: 'string' },
+                },
+            },   
         },
     },
+    apis: [path.join(__dirname, '/routes/*.ts')],
     servers: [
         {
             url: `http://localhost:${port}`,
@@ -185,9 +200,30 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     next();
 });
 
+// Scheduler to Check Reminders Every Minute
+cron.schedule('* * * * *', () => {
+    const currentDateTime = new Date();
+    const dueReminders = applicationRepository.getDueReminders(currentDateTime);
+    
+    dueReminders.forEach(reminder => {
+        const application = applicationRepository.getApplicationById(reminder.applicationId);
+        if (application) {
+            // For demonstration, we'll log the reminder.
+            // In a real-world scenario, integrate with an email service or push notifications.
+            console.log(`Reminder: Follow up on your application for "${application.jobTitle}" at "${application.companyName}"`);
+            if (reminder.message) {
+                console.log(`Message: ${reminder.message}`);
+            }
+            // Optionally, delete the reminder after it's been processed
+            applicationRepository.deleteReminder(reminder.id);
+        }
+    });
+});
+
 // Start the server
 app.listen(port, () => {
     console.log(`Back-end is running on port ${port}.`);
+    console.log(`Swagger docs available at http://localhost:${port}/api-docs`);
 });
 
 
