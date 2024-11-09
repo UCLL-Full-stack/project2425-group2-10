@@ -60,7 +60,7 @@ const JobApplicationsOverview: React.FC = () => {
       newStatus: ApplicationStatus
   ) => {
       try {
-          await axios.put(`http://localhost:3000/applications/${applicationId}`, { status: newStatus });
+          await axios.put(`http://localhost:3000/applications/${applicationId}/status`, { status: newStatus });
           setApplications((prev) =>
               prev.map((app) =>
                   app.id === applicationId ? { ...app, status: newStatus } : app
