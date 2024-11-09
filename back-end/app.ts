@@ -34,7 +34,7 @@ fs.mkdirSync(coverLetterDir, { recursive: true });
 // CORS Configuration
 app.use(
     cors({
-        origin: 'http://localhost:8080', // Update with your front-end URL
+        origin: 'http://localhost:8000', // Update with your front-end URL
         methods: ['GET', 'POST', 'PUT', 'DELETE'],
         credentials: true,
     })
