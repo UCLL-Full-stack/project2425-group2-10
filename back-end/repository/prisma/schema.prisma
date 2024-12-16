@@ -1,5 +1,3 @@
-// prisma/schema.prisma
-
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -24,23 +22,23 @@ enum ApplicationStatus {
 }
 
 model Job {
-  id             Int        @id @default(autoincrement())
+  id             Int          @id @default(autoincrement())
   companyName    String
   jobTitle       String
   date           DateTime
   status         JobStatus
   description    String?
-  adminId        Int        // Foreign key field
-  admin          Admin      @relation(fields: [adminId], references: [id])  // Inverse relation
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  adminId        Int
+  admin          Admin        @relation(fields: [adminId], references: [id])
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   jobSkills      JobSkill[]
-  applications    Application[]
+  applications   Application[]
 }
 
 model Application {
   id             Int                @id @default(autoincrement())
-  job            Job                @relation(fields: [jobId], references: [id])
+  job            Job                @relation(fields: [jobId], references: [id], onDelete: Cascade)
   jobId          Int
   applicantName  String
   applicantEmail String             @unique
@@ -56,24 +54,24 @@ model Application {
 
 model Reminder {
   id             Int          @id @default(autoincrement())
-  application     Application @relation(fields: [applicationId], references: [id])
-  applicationId   Int
-  reminderDate    DateTime
-  message         String?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  application    Application  @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  applicationId  Int
+  reminderDate   DateTime
+  message        String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 }
 
 model Skill {
   id        Int        @id @default(autoincrement())
   name      String     @unique
-  jobSkills JobSkill[] // Relation field
+  jobSkills JobSkill[]
 }
 
 model JobSkill {
   jobId    Int
   skillId  Int
-  job      Job    @relation(fields: [jobId], references: [id])
+  job      Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
   skill    Skill  @relation(fields: [skillId], references: [id])
 
   @@id([jobId, skillId])

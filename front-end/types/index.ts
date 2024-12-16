@@ -1,13 +1,13 @@
-// front-end/types/index.tsx
+// front-end/types/index.ts
 
 export interface Job {
   id: number;
   companyName: string;
   jobTitle: string;
-  date: string;
-  status: string;
+  date: string; // ISO date string (e.g., "2024-05-20")
+  status: string; // e.g., "Open", "Paused", "Filled", "Closed"
   description?: string;
-  requiredSkills?: string[];
+  skills?: string[]; // Changed from 'requiredSkills' to 'skills' for consistency
   adminId: number;
 }
 
@@ -24,20 +24,19 @@ export interface Application {
   applicantEmail: string;
   resumeUrl: string;
   coverLetterUrl: string;
-  appliedAt: string;
+  appliedAt: string; // ISO date-time string (e.g., "2024-05-20T14:30:00Z")
   status: ApplicationStatus;
   jobTitle: string;
   companyName: string;
   notes?: string; // Optional field for notes
-  reminder?: Reminder;
+  reminders?: Reminder[]; // Changed from 'reminder' to 'reminders' to support multiple reminders
 }
 
 export interface Reminder {
   id: number;
   applicationId: number;
-  reminderDate: string; // ISO date string
+  reminderDate: string; // ISO date-time string
   message?: string;
 }
 
 export type ApplicationStatus = 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';
-

@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
-import Header from '@components/header'; // Adjust the import path as needed
+import Header from '@components/header'; 
 
 interface Job {
     companyName: string;
@@ -11,7 +11,7 @@ interface Job {
     date: string;
     status: string;
     description?: string;
-    requiredSkills?: string[];
+    skills?: string[]; 
 }
 
 const AddJob: React.FC = () => {
@@ -21,10 +21,10 @@ const AddJob: React.FC = () => {
         date: '',
         status: '',
         description: '',
-        requiredSkills: [],
+        skills: [], 
     });
 
-    const [skillsInput, setSkillsInput] = useState<string>(''); // New state for skills as string
+    const [skillsInput, setSkillsInput] = useState<string>(''); 
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const router = useRouter();
@@ -38,18 +38,18 @@ const AddJob: React.FC = () => {
     };
 
     const handleSkillsInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const { value } = e.target;
-      setSkillsInput(value);
-      // Split skills by comma, bullet, or new line
-      const skillsArray = value
-          .split(/[\n,•]+/)
-          .map(skill => skill.trim())
-          .filter(skill => skill !== '');
-      setJob(prev => ({
-          ...prev,
-          requiredSkills: skillsArray,
-      }));
-  };
+        const { value } = e.target;
+        setSkillsInput(value);
+        // Split skills by comma, bullet, or new line
+        const skillsArray = value
+            .split(/[\n,•]+/)
+            .map(skill => skill.trim())
+            .filter(skill => skill !== '');
+        setJob(prev => ({
+            ...prev,
+            skills: skillsArray, // Changed from 'requiredSkills' to 'skills'
+        }));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -65,7 +65,7 @@ const AddJob: React.FC = () => {
             return;
         }
 
-        if (!job.requiredSkills || job.requiredSkills.length === 0) {
+        if (!job.skills || job.skills.length === 0) { // Changed from 'requiredSkills' to 'skills'
           setError('Please specify at least one required skill.');
           return;
         }
@@ -81,7 +81,7 @@ const AddJob: React.FC = () => {
               date: '',
               status: '',
               description: '',
-              requiredSkills: [],
+              skills: [], // Changed from 'requiredSkills' to 'skills'
           });
             setSkillsInput('');
 
@@ -183,23 +183,23 @@ const AddJob: React.FC = () => {
                     </div>
 
                     <div className="mb-4">
-                        <label htmlFor="requiredSkills" className="block text-gray-700 font-semibold mb-2">
+                        <label htmlFor="skills" className="block text-gray-700 font-semibold mb-2">
                             Required Skills<span className="text-red-500">*</span>
                         </label>
                         <textarea
-                            id="requiredSkills"
-                            name="requiredSkills"
+                            id="skills" // Changed from 'requiredSkills' to 'skills'
+                            name="skills" // Changed from 'requiredSkills' to 'skills'
                             value={skillsInput}
                             onChange={handleSkillsInputChange}
                             placeholder="Enter skills separated by commas or bullets (•)"
                             className={`w-full p-2 border ${
                                 error && 'border-red-500'
                             } border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500`}
-                            aria-describedby="requiredSkills-error"
+                            aria-describedby="skills-error" // Changed id reference
                             required
                         ></textarea>
                         {error && (
-                            <p id="requiredSkills-error" className="text-red-500 text-sm mt-1">
+                            <p id="skills-error" className="text-red-500 text-sm mt-1">
                                 {error}
                             </p>
                         )}

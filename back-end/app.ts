@@ -1,5 +1,3 @@
-// back-end/src/app.ts
-
 import * as dotenv from 'dotenv';
 import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
@@ -15,7 +13,8 @@ import applicationRoutes from './routes/applicationRoutes';
 import jobRoutes from './routes/jobRoutes';
 import { applicationRepository } from './repository/applicationRepository';
 import { jobRepository } from './repository/jobRepository';
-import { applicationService } from './service/applicationService';
+// If not used, remove the next line
+// import { applicationService } from './service/applicationService';
 
 // Initialize environment variables
 dotenv.config();
@@ -37,7 +36,7 @@ fs.mkdirSync(coverLetterDir, { recursive: true });
 // CORS Configuration
 app.use(
     cors({
-        origin: 'http://localhost:8000', // Update with your front-end URL
+        origin: 'http://localhost:8000', // Update with your front-end URL if needed
         credentials: true,
     })
 );
@@ -45,30 +44,33 @@ app.use(
 // Middleware for parsing JSON bodies
 app.use(bodyParser.json());
 
-// Middleware for parsing URL-encoded bodies (optional, can be removed if not needed)
+// Middleware for parsing URL-encoded bodies (optional)
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Middleware to ensure 'skills' is an array
+// Middleware to handle 'skills' only for job creation/update routes
 app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.body && req.body.skills) {
-        console.log('Original skills:', req.body.skills); // Log original skills
+    // Apply this only to POST or PUT requests on '/jobs' route
+    if (req.path.startsWith('/jobs') && (req.method === 'POST' || req.method === 'PUT')) {
+        if (req.body && req.body.skills) {
+            console.log('Original skills:', req.body.skills);
 
-        if (typeof req.body.skills === 'string') {
-            // If 'skills' is a comma-separated string, convert it to an array
-            req.body.skills = req.body.skills
-                .split(',')
-                .map((skill: string) => skill.trim()) // Explicitly type 'skill' as string
-                .filter((skill: string) => skill.length > 0);
-            console.log('Transformed skills (from string):', req.body.skills); // Log transformed skills
-        } else if (!Array.isArray(req.body.skills)) {
-            // If 'skills' is a single value, convert it to an array
-            req.body.skills = [String(req.body.skills)];
-            console.log('Transformed skills (from single value):', req.body.skills); // Log transformed skills
+            if (typeof req.body.skills === 'string') {
+                // If 'skills' is a comma-separated string, convert it to an array
+                req.body.skills = req.body.skills
+                    .split(',')
+                    .map((skill: string) => skill.trim())
+                    .filter((skill: string) => skill.length > 0);
+                console.log('Transformed skills (from string):', req.body.skills);
+            } else if (!Array.isArray(req.body.skills)) {
+                // If 'skills' is not an array, wrap it in one
+                req.body.skills = [String(req.body.skills)];
+                console.log('Transformed skills (from single value):', req.body.skills);
+            } else {
+                console.log('Skills are already an array:', req.body.skills);
+            }
         } else {
-            console.log('Skills are already an array:', req.body.skills); // Log if skills are already an array
+            console.log('No skills field found in request body for a job route.');
         }
-    } else {
-        console.log('No skills field found in request body.');
     }
     next();
 });
@@ -96,7 +98,7 @@ const swaggerDefinition = {
                     date: { type: 'string', format: 'date' },
                     status: { type: 'string' },
                     description: { type: 'string' },
-                    requiredSkills: {
+                    skills: {
                         type: 'array',
                         items: { type: 'string' },
                     },
@@ -155,7 +157,6 @@ const swaggerDefinition = {
             },
         },
     },
-    apis: [path.join(__dirname, '/routes/*.ts')], // Path to the API docs
     servers: [
         {
             url: `http://localhost:${port}`,
@@ -163,12 +164,11 @@ const swaggerDefinition = {
     ],
 };
 
-const options = {
-    swaggerDefinition,
-    apis: ['./routes/*.ts'], // Path to the API docs
-};
+const swaggerSpec = swaggerJSDoc({
+    definition: swaggerDefinition,
+    apis: [path.join(__dirname, '/routes/*.ts')],
+});
 
-const swaggerSpec = swaggerJSDoc(options);
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Multer Configuration for File Uploads
@@ -184,13 +184,11 @@ const storage = multer.diskStorage({
     },
     filename: function (req: Request, file: Express.Multer.File, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        // Sanitize the original filename to prevent directory traversal
         const sanitizedOriginalName = path.basename(file.originalname);
         cb(null, uniqueSuffix + '-' + sanitizedOriginalName);
     },
 });
 
-// File filter to accept only PDF and DOCX for resumes and cover letters
 const fileFilter = (
     req: Request,
     file: Express.Multer.File,
@@ -208,28 +206,9 @@ const fileFilter = (
     }
 };
 
-// Initialize multer with storage, file filter, and file size limits
-const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
+const upload = multer({ storage, fileFilter, limits: { fileSize: 5 * 1024 * 1024 } });
 
 // Routes
-
-/**
- * @swagger
- * /status:
- *   get:
- *     summary: Get the status of the back-end server
- *     responses:
- *       200:
- *         description: Server is running
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Back-end is running...
- */
 app.get('/status', (req: Request, res: Response) => {
     res.json({ message: 'Back-end is running...' });
 });
@@ -244,10 +223,8 @@ app.use('/applications', applicationRoutes);
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     console.error(err.stack);
     if (err instanceof multer.MulterError) {
-        // Handle Multer-specific errors
         return res.status(400).json({ message: err.message });
     } else if (err) {
-        // Handle general errors
         return res.status(500).json({ message: err.message || 'An unexpected error occurred.' });
     }
     next();
@@ -258,19 +235,15 @@ cron.schedule('* * * * *', async () => {
     const currentDateTime = new Date();
 
     try {
-        // Fetch due reminders
         const dueReminders = await applicationRepository.getDueReminders(currentDateTime);
 
         for (const reminder of dueReminders) {
-            // Fetch the associated application
             const application = await applicationRepository.getApplicationById(reminder.applicationId);
 
             if (application) {
-                // Fetch the associated job to get jobTitle and companyName
                 const job = await jobRepository.getJobById(application.jobId);
 
                 if (job) {
-                    // Log the reminder details
                     console.log(
                         `Reminder: Follow up on your application for "${job.jobTitle}" at "${job.companyName}"`
                     );
@@ -278,7 +251,6 @@ cron.schedule('* * * * *', async () => {
                         console.log(`Message: ${reminder.message}`);
                     }
 
-                    // Optionally, delete the reminder after it's been processed
                     const deleteSuccess = await applicationRepository.deleteReminder(reminder.id);
                     if (!deleteSuccess) {
                         console.error(`Failed to delete reminder with ID: ${reminder.id}`);

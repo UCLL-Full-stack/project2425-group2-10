@@ -1,17 +1,13 @@
-// front-end/pages/my-applications/index.tsx
-
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import Header from '@components/header';
-import { Application, Reminder, ApplicationStatus } from '@types';
+import { Application, ApplicationStatus, Reminder } from '@types';
 import Spinner from '@components/Spinner';
-import { XIcon } from '@heroicons/react/solid';
-import Link from 'next/link';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Modal from '@components/Modal'; // Assume you have a Modal component
 import DatePicker from 'react-datepicker'; // Date picker library
 import 'react-datepicker/dist/react-datepicker.css';
+import ApplicationService from '@services/applicationService'; // Import the new ApplicationService
 
 const statusOptions: (ApplicationStatus | 'All')[] = ['All', 'Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'];
 
@@ -22,83 +18,70 @@ const JobApplicationsOverview: React.FC = () => {
   const [editingNotesId, setEditingNotesId] = useState<number | null>(null);
   const [notes, setNotes] = useState<string>('');
   const [notesError, setNotesError] = useState<string>('');
-  const [savingNotesId, setSavingNotesId] = useState<number | null>(null);
   const [filterStatus, setFilterStatus] = useState<ApplicationStatus | 'All'>('All');
 
-    // Modal States for Reminders
-    const [isReminderModalOpen, setIsReminderModalOpen] = useState<boolean>(false);
-    const [currentReminderApplicationId, setCurrentReminderApplicationId] = useState<number | null>(null);
-    const [reminderDate, setReminderDate] = useState<Date | null>(null);
-    const [reminderMessage, setReminderMessage] = useState<string>('');
-    const [reminderError, setReminderError] = useState<string>('');
+  // Modal States for Reminders
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState<boolean>(false);
+  const [currentReminderApplicationId, setCurrentReminderApplicationId] = useState<number | null>(null);
+  const [currentEditingReminderId, setCurrentEditingReminderId] = useState<number | null>(null);
+  const [reminderDate, setReminderDate] = useState<Date | null>(null);
+  const [reminderMessage, setReminderMessage] = useState<string>('');
+  const [reminderError, setReminderError] = useState<string>('');
 
   useEffect(() => {
-    const fetchApplications = async () => {
+    const fetchApps = async () => {
       setLoading(true);
       setError(null);
       try {
-        const params: Record<string, string> = {};
-        if (filterStatus !== 'All') {
-          params.status = filterStatus;
+        let response;
+        if (filterStatus === 'All') {
+          response = await ApplicationService.getAllApplications();
+        } else {
+          response = await ApplicationService.getApplicationsByStatus(filterStatus);
         }
-        const response = await axios.get<Application[]>('http://localhost:3000/applications', { params });
-        setApplications(response.data);
-      } catch (error) {
-        console.error('Error fetching applications:', error);
-        setError('Failed to load job applications. Please try again later.');
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          const errorMsg = errorData.message || 'Failed to load applications. Please try again later.';
+          setError(errorMsg);
+          toast.error(errorMsg);
+        } else {
+          const data: Application[] = await response.json();
+          setApplications(data);
+        }
+      } catch (err: any) {
+        console.error('Error fetching applications:', err);
+        const errorMessage = err.message || 'Failed to load applications. Please try again later.';
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchApplications();
+    fetchApps();
   }, [filterStatus]);
 
-    // Handle Status Change in Application
-    const handleStatusChange = async (
-      applicationId: number,
-      newStatus: ApplicationStatus
-  ) => {
-      try {
-          await axios.put(`http://localhost:3000/applications/${applicationId}`, { status: newStatus });
-          setApplications((prev) =>
-              prev.map((app) =>
-                  app.id === applicationId ? { ...app, status: newStatus } : app
-              )
-          );
-          toast.success('Application status updated successfully.');
-      } catch (error) {
-          console.error('Error updating application status:', error);
-          toast.error('Failed to update status. Please try again.');
-      }
-  };  
-
-  const discardApplication = async (applicationId: number) => {
-    if (!confirm('Are you sure you want to discard this job application? This will delete the job and all associated applications. This action cannot be undone.')) {
-        return;
-    }
-
+  const handleStatusChange = async (applicationId: number, newStatus: ApplicationStatus) => {
     try {
-        await axios.delete(`http://localhost:3000/applications/${applicationId}`);
-        // Remove the job and its applications from the state
-        setApplications(prevApps => prevApps.filter(app => app.id !== applicationId));
-        alert('Job and related applications discarded successfully.');
+      const response = await ApplicationService.updateApplicationStatus(applicationId, newStatus);
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMsg = errorData.message || 'Failed to update status. Please try again.';
+        toast.error(errorMsg);
+      } else {
+        const updatedData = await response.json();
+        const updatedApp = updatedData.application;
+        setApplications((prev) =>
+          prev.map((app) => (app.id === applicationId ? updatedApp : app))
+        );
+        toast.success('Application status updated successfully.');
+      }
     } catch (err: any) {
-        alert(err.response?.data?.message || 'Failed to discard the job application. Please try again.');
-        console.error('Error discarding job application:', err);
+      console.error('Error updating application status:', err);
+      const errorMessage = err.message || 'Failed to update status. Please try again.';
+      toast.error(errorMessage);
     }
-};
-
-  const startEditingNotes = (applicationId: number, currentNotes: string) => {
-    setEditingNotesId(applicationId);
-    setNotes(currentNotes || '');
-    setNotesError('');
-  };
-
-  const cancelEditingNotes = () => {
-    setEditingNotesId(null);
-    setNotes('');
-    setNotesError('');
   };
 
   const saveNotes = async (applicationId: number) => {
@@ -107,126 +90,171 @@ const JobApplicationsOverview: React.FC = () => {
       return;
     }
 
-    setSavingNotesId(applicationId);
-
     try {
-      // Update notes on the server
-      await axios.put(`http://localhost:3000/applications/${applicationId}/notes`, { notes });
-
-      // Update state locally
-      setApplications((prev) =>
-        prev.map((app) =>
-          app.id === applicationId ? { ...app, notes } : app
-        )
-      );
-
-      setEditingNotesId(null);
-      setNotes('');
-      setNotesError('');
-    } catch (error) {
-      console.error('Error updating notes:', error);
-      setNotesError('Failed to save notes. Please try again.');
+      const response = await ApplicationService.updateApplicationNotes(applicationId, notes);
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMsg = errorData.message || 'Failed to save notes. Please try again.';
+        setNotesError(errorMsg);
+        toast.error(errorMsg);
+      } else {
+        const updatedData = await response.json();
+        const updatedApp = updatedData.application;
+        setApplications((prev) =>
+          prev.map((app) => (app.id === applicationId ? updatedApp : app))
+        );
+        setEditingNotesId(null);
+        setNotes('');
+        setNotesError('');
+        toast.success('Notes saved successfully.');
+      }
+    } catch (err: any) {
+      console.error('Error updating notes:', err);
+      const errorMessage = err.message || 'Failed to save notes. Please try again.';
+      setNotesError(errorMessage);
+      toast.error(errorMessage);
     }
   };
 
-    // Open Reminder Modal
-    const openReminderModal = (applicationId: number, existingReminder?: Reminder) => {
-      setCurrentReminderApplicationId(applicationId);
-      if (existingReminder) {
-        setReminderDate(new Date(existingReminder.reminderDate));
-        setReminderMessage(existingReminder.message || '');
+  const cancelEditingNotes = () => {
+    setEditingNotesId(null);
+    setNotes('');
+    setNotesError('');
+  };
+
+  const startEditingNotes = (applicationId: number, currentNotes: string) => {
+    setEditingNotesId(applicationId);
+    setNotes(currentNotes || '');
+    setNotesError('');
+  };
+
+  const discardApplicationHandler = async (applicationId: number) => {
+    if (!confirm('Are you sure you want to discard this application? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await ApplicationService.deleteApplication(applicationId);
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMsg = errorData.message || 'Failed to discard the application. Please try again.';
+        toast.error(errorMsg);
       } else {
-        setReminderDate(null);
-        setReminderMessage('');
+        toast.success('Application discarded successfully.');
+        setApplications((prevApps) => prevApps.filter((app) => app.id !== applicationId));
       }
-      setReminderError('');
-      setIsReminderModalOpen(true);
-    };
-    
-    // Close Reminder Modal
-    const closeReminderModal = () => {
-      setIsReminderModalOpen(false);
-      setCurrentReminderApplicationId(null);
+    } catch (err: any) {
+      console.error('Error discarding application:', err);
+      const errorMessage = err.message || 'Failed to discard the application. Please try again.';
+      toast.error(errorMessage);
+    }
+  };
+
+  const openReminderModal = (applicationId: number, reminder?: Reminder) => {
+    setCurrentReminderApplicationId(applicationId);
+    if (reminder) {
+      setCurrentEditingReminderId(reminder.id);
+      setReminderDate(new Date(reminder.reminderDate));
+      setReminderMessage(reminder.message || '');
+    } else {
+      setCurrentEditingReminderId(null);
       setReminderDate(null);
       setReminderMessage('');
-      setReminderError('');
-    };
-    
-    // Save Reminder
-    const saveReminder = async () => {
-      if (!currentReminderApplicationId || !reminderDate) {
-        setReminderError('Please select a valid reminder date and time.');
-        return;
-      }
-      
-      const isoDate = reminderDate.toISOString();
-      
-      try {
-        // Check if application already has a reminder
-        const application = applications.find(app => app.id === currentReminderApplicationId);
-        if (application?.reminder) {
-          // Update existing reminder
-          await axios.put(`http://localhost:3000/applications/reminders/${application.reminder.id}`, {
-            reminderDate: isoDate,
-            message: reminderMessage,
-          });
-          setApplications(prev =>
-            prev.map(app =>
-              app.id === currentReminderApplicationId
-                ? { ...app, reminder: { ...app.reminder!, reminderDate: isoDate, message: reminderMessage } }
-                : app
-            )
-          );
-          toast.success('Reminder updated successfully.');
-        } else {
-          // Set new reminder
-          const response = await axios.post(`http://localhost:3000/applications/${currentReminderApplicationId}/reminder`, {
-            reminderDate: isoDate,
-            message: reminderMessage,
-          });
-          const newReminder: Reminder = response.data.reminder;
-          setApplications(prev =>
-            prev.map(app =>
-              app.id === currentReminderApplicationId
-                ? { ...app, reminder: newReminder }
-                : app
-            )
-          );
-          toast.success('Reminder set successfully.');
-        }
-        closeReminderModal();
-      } catch (error: any) {
-        console.error('Error setting/updating reminder:', error);
-        setReminderError('Failed to set/update reminder. Please try again.');
-        toast.error('Failed to set/update reminder. Please try again.');
-      }
-    };
-    
-    // Delete Reminder
-    const deleteReminder = async (applicationId: number) => {
-      if (!confirm('Are you sure you want to delete this reminder?')) {
-        return;
+    }
+    setReminderError('');
+    setIsReminderModalOpen(true);
+  };
+
+  const closeReminderModal = () => {
+    setIsReminderModalOpen(false);
+    setCurrentReminderApplicationId(null);
+    setCurrentEditingReminderId(null);
+    setReminderDate(null);
+    setReminderMessage('');
+    setReminderError('');
+  };
+
+  const saveReminderHandler = async () => {
+    if (!currentReminderApplicationId || !reminderDate) {
+      setReminderError('Please select a valid reminder date and time.');
+      return;
+    }
+
+    const isoDate = reminderDate.toISOString();
+
+    try {
+      let response;
+      if (currentEditingReminderId) {
+        response = await ApplicationService.updateReminder(currentEditingReminderId, isoDate, reminderMessage);
+      } else {
+        response = await ApplicationService.setReminder(currentReminderApplicationId, isoDate, reminderMessage);
       }
 
-      try {
-        const application = applications.find(app => app.id === applicationId);
-        if (!application?.reminder) {
-          toast.error('No reminder found to delete.');
-          return;
-        }
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMsg = errorData.message || 'Failed to set/update reminder. Please try again.';
+        setReminderError(errorMsg);
+        toast.error(errorMsg);
+      } else {
+        const updatedData = await response.json();
+        const updatedReminder = currentEditingReminderId ? updatedData.reminder : updatedData.reminder;
 
-        await axios.delete(`http://localhost:3000/applications/reminders/${application.reminder.id}`);
         setApplications(prev =>
-          prev.map(app =>
-            app.id === applicationId ? { ...app, reminder: undefined } : app
-          )
+          prev.map(app => {
+            if (app.id === currentReminderApplicationId) {
+              let newReminders = app.reminders || [];
+              if (currentEditingReminderId) {
+                // Update existing reminder
+                newReminders = newReminders.map(rem => rem.id === currentEditingReminderId ? updatedReminder : rem);
+              } else {
+                // Add new reminder
+                newReminders = [...newReminders, updatedReminder];
+              }
+              return { ...app, reminders: newReminders };
+            }
+            return app;
+          })
         );
-        toast.success('Reminder deleted successfully.');
-      } catch (error) {
-        console.error('Error deleting reminder:', error);
-        toast.error('Failed to delete reminder. Please try again.');
+
+        toast.success(currentEditingReminderId ? 'Reminder updated successfully.' : 'Reminder set successfully.');
+        closeReminderModal();
       }
-    };
+    } catch (err: any) {
+      console.error('Error setting/updating reminder:', err);
+      const errorMessage = err.message || 'Failed to set/update reminder. Please try again.';
+      setReminderError(errorMessage);
+      toast.error(errorMessage);
+    }
+  };
+
+  const deleteReminderHandler = async (reminderId: number) => {
+    if (!confirm('Are you sure you want to delete this reminder?')) {
+      return;
+    }
+
+    try {
+      const response = await ApplicationService.deleteReminder(reminderId);
+      if (!response.ok) {
+        const errorData = await response.json();
+        const errorMsg = errorData.message || 'Failed to delete reminder. Please try again.';
+        toast.error(errorMsg);
+      } else {
+        toast.success('Reminder deleted successfully.');
+        setApplications(prev =>
+          prev.map(app => {
+            if (app.reminders) {
+              return { ...app, reminders: app.reminders.filter(rem => rem.id !== reminderId) };
+            }
+            return app;
+          })
+        );
+      }
+    } catch (error: any) {
+      console.error('Error deleting reminder:', error);
+      const errorMessage = error.message || 'Failed to delete reminder. Please try again.';
+      toast.error(errorMessage);
+    }
+  };
 
   if (loading) return <Spinner />;
 
@@ -255,26 +283,22 @@ const JobApplicationsOverview: React.FC = () => {
           </select>
         </div>
 
-        {loading ? (
-          <p>Loading job applications...</p>
-        ) : error ? (
-          <p className="text-red-500">{error}</p>
-        ) : applications.length > 0 ? (
+        {applications.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {applications.map((application) => (
               <div key={application.id} className="bg-white p-6 rounded-lg shadow flex flex-col justify-between relative">
-                {/* Discard X Icon */}
+                {/* Discard Application Icon */}
                 <button
-                  onClick={() => discardApplication(application.id)}
+                  onClick={() => discardApplicationHandler(application.id)}
                   className="absolute top-2 right-2 text-gray-500 hover:text-red-500 focus:outline-none"
-                  aria-label="Discard Job"
+                  aria-label="Discard Application"
                 >
                   {/* X Icon SVG */}
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 011.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                   </svg>
                 </button>
-                
+
                 <h2 className="text-xl font-semibold mb-2">{application.jobTitle}</h2>
                 <p className="text-gray-600 mb-2">
                   <strong>Company:</strong> {application.companyName}
@@ -303,56 +327,60 @@ const JobApplicationsOverview: React.FC = () => {
                 </div>
 
 
-                {/* Set Reminder Button or Reminder Details */}
+                {/* Reminders Section */}
                 <div className="mt-4">
-                  {application.reminder ? (
-                    <div className="p-2 border border-blue-300 rounded bg-blue-50">
-                      <div className="flex justify-between items-center">
-                        <div>
-                          <p className="text-blue-700 font-semibold">Reminder:</p>
-                          <p className="text-blue-600">
-                            {new Date(application.reminder.reminderDate).toLocaleString()}
-                          </p>
-                          {application.reminder.message && (
-                            <p className="text-blue-600 italic">{application.reminder.message}</p>
-                          )}
-                        </div>
-                        <div className="flex space-x-2">
-                          <button
-                            onClick={() => openReminderModal(application.id, application.reminder)}
-                            className="text-gray-500 hover:text-green-500 focus:outline-none"
-                            aria-label="Edit Reminder"
-                          >
-                            {/* Pencil Icon SVG */}
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
-                            </svg>
-                          </button>
-                          <button
-                            onClick={() => deleteReminder(application.id)}
-                            className="text-gray-500 hover:text-red-500 focus:outline-none"
-                            aria-label="Delete Reminder"
-                          >
-                            {/* Trash Icon SVG */}
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v1H5m16 0h-1V3a1 1 0 00-1-1h-4a1 1 0 00-1 1v1h-1" clipRule="evenodd" />
-                            </svg>
-                          </button>
+                  <h3 className="text-lg font-semibold mb-2">Reminders:</h3>
+                  {application.reminders && application.reminders.length > 0 ? (
+                    application.reminders.map(reminder => (
+                      <div key={reminder.id} className="p-2 border border-blue-300 rounded bg-blue-50 mb-2">
+                        <div className="flex justify-between items-center">
+                          <div>
+                            <p className="text-blue-700 font-semibold">Date & Time:</p>
+                            <p className="text-blue-600">
+                              {new Date(reminder.reminderDate).toLocaleString()}
+                            </p>
+                            {reminder.message && (
+                              <p className="text-blue-600 italic">{reminder.message}</p>
+                            )}
+                          </div>
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => openReminderModal(application.id, reminder)}
+                              className="text-gray-500 hover:text-green-500 focus:outline-none"
+                              aria-label="Edit Reminder"
+                            >
+                              {/* Pencil Icon SVG */}
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" />
+                              </svg>
+                            </button>
+                            <button
+                              onClick={() => deleteReminderHandler(reminder.id)}
+                              className="text-gray-500 hover:text-red-500 focus:outline-none"
+                              aria-label="Delete Reminder"
+                            >
+                              {/* Trash Icon SVG */}
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H3a1 1 0 000 2h1v10a2 2 0 002 2h8a2 2 0 002-2V6h1a1 1 0 100-2h-2V3a1 1 0 00-1-1H6zm2 5a1 1 0 011-1h4a1 1 0 110 2H9a1 1 0 01-1-1z" clipRule="evenodd" />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ))
                   ) : (
-                    <button
-                      onClick={() => openReminderModal(application.id, application.reminder)}
-                      className="flex items-center bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors focus:outline-none"
-                    >
-                      {/* Calendar Icon SVG */}
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      Set Reminder
-                    </button>
+                    <p>No reminders set.</p>
                   )}
+                  <button
+                    onClick={() => openReminderModal(application.id)}
+                    className="flex items-center bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 transition-colors focus:outline-none"
+                  >
+                    {/* Calendar Icon SVG */}
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Add Reminder
+                  </button>
                 </div>
 
                 {/* Notes Section */}
@@ -408,7 +436,7 @@ const JobApplicationsOverview: React.FC = () => {
       {/* Reminder Modal */}
       {isReminderModalOpen && (
         <Modal onClose={closeReminderModal}>
-          <h2 className="text-xl font-bold mb-4">Set Reminder</h2>
+          <h2 className="text-xl font-bold mb-4">{currentEditingReminderId ? 'Edit Reminder' : 'Set Reminder'}</h2>
           <div className="mb-4">
             <label className="block text-gray-700 font-semibold mb-2">Reminder Date & Time:</label>
             <DatePicker
@@ -434,7 +462,7 @@ const JobApplicationsOverview: React.FC = () => {
           {reminderError && <p className="text-red-500 mb-2">{reminderError}</p>}
           <div className="flex justify-end space-x-2">
             <button
-              onClick={saveReminder}
+              onClick={saveReminderHandler}
               className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition-colors"
             >
               Save

@@ -50,20 +50,21 @@ export class Job {
    * @returns The domain Job instance.
    */
   static fromPrisma(prismaJob: any): Job {
-      const skills = prismaJob.jobSkills.map((js: any) => Skill.fromPrisma(js.skill));
-      const applications = prismaJob.applications.map((app: any) => Application.fromPrisma(app));
-      return new Job(
-          prismaJob.id,
-          prismaJob.companyName,
-          prismaJob.jobTitle,
-          prismaJob.date,
-          prismaJob.status,
-          prismaJob.description,
-          skills,
-          applications,
-          prismaJob.adminId, // Ensure adminId is mapped
-          prismaJob.createdAt,
-          prismaJob.updatedAt
-      );
+    const skills = prismaJob.jobSkills ? prismaJob.jobSkills.map((js: any) => js.skill.name) : [];
+    const applications = prismaJob.applications ? prismaJob.applications.map((app: any) => Application.fromPrisma(app)) : [];
+  
+    return new Job(
+      prismaJob.id,
+      prismaJob.companyName,
+      prismaJob.jobTitle,
+      prismaJob.date,
+      prismaJob.status,
+      prismaJob.description,
+      skills,
+      applications,
+      prismaJob.adminId,
+      prismaJob.createdAt,
+      prismaJob.updatedAt
+    );
   }
 }
