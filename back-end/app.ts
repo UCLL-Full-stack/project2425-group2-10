@@ -1,4 +1,4 @@
-// back-end/app.ts
+// back-end/src/app.ts
 
 import * as dotenv from 'dotenv';
 import express, { Request, Response, NextFunction } from 'express';
@@ -8,19 +8,22 @@ import swaggerUi from 'swagger-ui-express';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import applicationRoutes from './routes/applicationRoutes';
-import { applicationRepository } from './repository/applicationRepository';
-import jobRoutes from './routes/jobRoutes';
-import './util/seed';
-import { Reminder } from './types';
 import cron from 'node-cron';
-// Optional: Seed initial data
-// import './util/seed';
+import bodyParser from 'body-parser';
+import { PrismaClient } from '@prisma/client';
+import applicationRoutes from './routes/applicationRoutes';
+import jobRoutes from './routes/jobRoutes';
+import { applicationRepository } from './repository/applicationRepository';
+import { jobRepository } from './repository/jobRepository';
+import { applicationService } from './service/applicationService';
 
+// Initialize environment variables
 dotenv.config();
 
 const app = express();
 const port = process.env.APP_PORT || 3000;
+
+const prisma = new PrismaClient();
 
 // Define directories for file uploads
 const uploadDir = path.join(__dirname, 'uploads');
@@ -35,13 +38,40 @@ fs.mkdirSync(coverLetterDir, { recursive: true });
 app.use(
     cors({
         origin: 'http://localhost:8000', // Update with your front-end URL
-        methods: ['GET', 'POST', 'PUT', 'DELETE'],
         credentials: true,
     })
 );
 
 // Middleware for parsing JSON bodies
-app.use(express.json());
+app.use(bodyParser.json());
+
+// Middleware for parsing URL-encoded bodies (optional, can be removed if not needed)
+app.use(bodyParser.urlencoded({ extended: true }));
+
+// Middleware to ensure 'skills' is an array
+app.use((req: Request, res: Response, next: NextFunction) => {
+    if (req.body && req.body.skills) {
+        console.log('Original skills:', req.body.skills); // Log original skills
+
+        if (typeof req.body.skills === 'string') {
+            // If 'skills' is a comma-separated string, convert it to an array
+            req.body.skills = req.body.skills
+                .split(',')
+                .map((skill: string) => skill.trim()) // Explicitly type 'skill' as string
+                .filter((skill: string) => skill.length > 0);
+            console.log('Transformed skills (from string):', req.body.skills); // Log transformed skills
+        } else if (!Array.isArray(req.body.skills)) {
+            // If 'skills' is a single value, convert it to an array
+            req.body.skills = [String(req.body.skills)];
+            console.log('Transformed skills (from single value):', req.body.skills); // Log transformed skills
+        } else {
+            console.log('Skills are already an array:', req.body.skills); // Log if skills are already an array
+        }
+    } else {
+        console.log('No skills field found in request body.');
+    }
+    next();
+});
 
 // Serve static files (uploaded resumes and cover letters)
 app.use('/uploads/resumes', express.static(resumeDir));
@@ -74,6 +104,15 @@ const swaggerDefinition = {
                 },
                 required: ['id', 'companyName', 'jobTitle', 'date', 'status', 'adminId'],
             },
+            Admin: {
+                type: 'object',
+                properties: {
+                    id: { type: 'number' },
+                    name: { type: 'string' },
+                    email: { type: 'string', format: 'email' },
+                },
+                required: ['id', 'name', 'email'],
+            },
             Application: {
                 type: 'object',
                 properties: {
@@ -88,23 +127,35 @@ const swaggerDefinition = {
                     jobTitle: { type: 'string' },
                     companyName: { type: 'string' },
                     notes: { type: 'string' },
-                    reminder: { $ref: '#/components/schemas/Reminder' },
+                    reminders: {
+                        type: 'array',
+                        items: { $ref: '#/components/schemas/Reminder' },
+                    },
                 },
-                required: ['id', 'jobId', 'applicantName', 'applicantEmail', 'resumeUrl', 'coverLetterUrl', 'appliedAt', 'status', 'jobTitle', 'companyName'],
+                required: [
+                    'id',
+                    'jobId',
+                    'applicantName',
+                    'applicantEmail',
+                    'resumeUrl',
+                    'coverLetterUrl',
+                    'appliedAt',
+                    'status',
+                ],
             },
-
             Reminder: {
                 type: 'object',
                 properties: {
-                  id: { type: 'integer' },
-                  applicationId: { type: 'integer' },
-                  reminderDate: { type: 'string', format: 'date-time' },
-                  message: { type: 'string' },
+                    id: { type: 'number' },
+                    applicationId: { type: 'number' },
+                    reminderDate: { type: 'string', format: 'date-time' },
+                    message: { type: 'string' },
                 },
-            },   
+                required: ['id', 'applicationId', 'reminderDate'],
+            },
         },
     },
-    apis: [path.join(__dirname, '/routes/*.ts')],
+    apis: [path.join(__dirname, '/routes/*.ts')], // Path to the API docs
     servers: [
         {
             url: `http://localhost:${port}`,
@@ -114,7 +165,7 @@ const swaggerDefinition = {
 
 const options = {
     swaggerDefinition,
-    apis: ['./controller/*.ts', './routes/*.ts'], // Path to the API docs
+    apis: ['./routes/*.ts'], // Path to the API docs
 };
 
 const swaggerSpec = swaggerJSDoc(options);
@@ -133,7 +184,9 @@ const storage = multer.diskStorage({
     },
     filename: function (req: Request, file: Express.Multer.File, cb) {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-        cb(null, uniqueSuffix + '-' + file.originalname);
+        // Sanitize the original filename to prevent directory traversal
+        const sanitizedOriginalName = path.basename(file.originalname);
+        cb(null, uniqueSuffix + '-' + sanitizedOriginalName);
     },
 });
 
@@ -201,23 +254,45 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Scheduler to Check Reminders Every Minute
-cron.schedule('* * * * *', () => {
+cron.schedule('* * * * *', async () => {
     const currentDateTime = new Date();
-    const dueReminders = applicationRepository.getDueReminders(currentDateTime);
-    
-    dueReminders.forEach(reminder => {
-        const application = applicationRepository.getApplicationById(reminder.applicationId);
-        if (application) {
-            // For demonstration, we'll log the reminder.
-            // In a real-world scenario, integrate with an email service or push notifications.
-            console.log(`Reminder: Follow up on your application for "${application.jobTitle}" at "${application.companyName}"`);
-            if (reminder.message) {
-                console.log(`Message: ${reminder.message}`);
+
+    try {
+        // Fetch due reminders
+        const dueReminders = await applicationRepository.getDueReminders(currentDateTime);
+
+        for (const reminder of dueReminders) {
+            // Fetch the associated application
+            const application = await applicationRepository.getApplicationById(reminder.applicationId);
+
+            if (application) {
+                // Fetch the associated job to get jobTitle and companyName
+                const job = await jobRepository.getJobById(application.jobId);
+
+                if (job) {
+                    // Log the reminder details
+                    console.log(
+                        `Reminder: Follow up on your application for "${job.jobTitle}" at "${job.companyName}"`
+                    );
+                    if (reminder.message) {
+                        console.log(`Message: ${reminder.message}`);
+                    }
+
+                    // Optionally, delete the reminder after it's been processed
+                    const deleteSuccess = await applicationRepository.deleteReminder(reminder.id);
+                    if (!deleteSuccess) {
+                        console.error(`Failed to delete reminder with ID: ${reminder.id}`);
+                    }
+                } else {
+                    console.error(`Job not found for application ID: ${application.id}`);
+                }
+            } else {
+                console.error(`Application not found for reminder ID: ${reminder.id}`);
             }
-            // Optionally, delete the reminder after it's been processed
-            applicationRepository.deleteReminder(reminder.id);
         }
-    });
+    } catch (error: unknown) {
+        console.error('Error in reminder scheduler:', error);
+    }
 });
 
 // Start the server
@@ -225,5 +300,3 @@ app.listen(port, () => {
     console.log(`Back-end is running on port ${port}.`);
     console.log(`Swagger docs available at http://localhost:${port}/api-docs`);
 });
-
-

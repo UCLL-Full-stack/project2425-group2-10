@@ -1,141 +1,96 @@
 // back-end/controller/applicationController.ts
 
 import { Request, Response } from 'express';
-import { applicationRepository } from '../repository/applicationRepository';
-import { jobRepository } from '../repository/jobRepository';
-import { Application, ApplicationStatus, NewApplication, Reminder } from '../types';
+import { applicationService } from '../service/applicationService';
+import { ApplicationStatus } from '../types';
 
 /**
- * Handles job application submissions.
+ * Handles fetching all applications.
  */
-export const applyForJob = (req: Request, res: Response) => {
-    const jobId = parseInt(req.params.id, 10);
-
-    if (isNaN(jobId)) {
-        return res.status(400).json({ message: 'Invalid job ID.' });
-    }
-
-    const job = jobRepository.getJobById(jobId);
-    if (!job) {
-        return res.status(404).json({ message: 'Job not found.' });
-    }
-
-    if (
-        !req.files ||
-        !req.files['resume'] ||
-        !req.files['coverLetter'] ||
-        req.files['resume'].length === 0 ||
-        req.files['coverLetter'].length === 0
-    ) {
-        return res.status(400).json({ message: 'Resume and Cover Letter are required.' });
-    }
-
-    const resume = req.files['resume'][0];
-    const coverLetter = req.files['coverLetter'][0];
-
-    const { applicantName, applicantEmail } = req.body;
-
-    if (!applicantName || typeof applicantName !== 'string' || applicantName.trim() === '') {
-        return res.status(400).json({ message: 'Applicant name is required and must be a non-empty string.' });
-    }
-
-    if (
-        !applicantEmail ||
-        typeof applicantEmail !== 'string' ||
-        !/^[A-Z0-9._%+-]+@[A-Z.-]+\.[A-Z]{2,}$/i.test(applicantEmail)
-    ) {
-        return res.status(400).json({ message: 'A valid applicant email is required.' });
-    }
-
-    const newApplication: NewApplication = {
-        jobId,
-        applicantName: applicantName.trim(),
-        applicantEmail: applicantEmail.trim(),
-        resumeUrl: `/uploads/resumes/${resume.filename}`,
-        coverLetterUrl: `/uploads/coverLetters/${coverLetter.filename}`,
-        appliedAt: new Date().toISOString(),
-        status: 'Applied', // Default status
-        jobTitle: job.jobTitle,
-        companyName: job.companyName,
-    };
-
-    const application = applicationRepository.addApplication(newApplication);
-
-    res.status(201).json({ message: 'Application submitted successfully.', application });
-};
-
-/**
- * Retrieves all job applications.
- */
-export const getApplications = (req: Request, res: Response) => {
-    const status = req.query.status as ApplicationStatus | undefined;
-
-    // Validate status if provided
-    const validStatuses: ApplicationStatus[] = ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'];
-    if (status && !validStatuses.includes(status)) {
-        return res.status(400).json({ message: 'Invalid status filter provided.' });
-    }
+export const handleGetApplications = async (req: Request, res: Response) => {
     try {
-        const applications = applicationRepository.getAllApplications(status);
-        res.json(applications);
+        const statusQuery = req.query.status as string | undefined;
+        let applications;
+
+        if (statusQuery) {
+            const validStatuses = Object.values(ApplicationStatus);
+            if (!validStatuses.includes(statusQuery as ApplicationStatus)) {
+                return res.status(400).json({ message: 'Invalid status value provided.' });
+            }
+            applications = await applicationService.getAllApplications(statusQuery as ApplicationStatus);
+        } else {
+            applications = await applicationService.getAllApplications();
+        }
+
+        res.status(200).json(applications);
     } catch (error) {
         console.error('Error fetching applications:', error);
-        res.status(500).json({ message: 'Failed to fetch job applications' });
+        res.status(500).json({ message: 'Failed to fetch job applications.' });
     }
 };
 
 /**
- * Handler to retrieve job applications by specific status.
+ * Handles fetching applications filtered by status.
  */
-export const getApplicationsByStatus = (req: Request, res: Response) => {
-    const status = req.query.status as ApplicationStatus | undefined;
+export const handleGetApplicationsByStatus = async (req: Request, res: Response) => {
+    const status = req.query.status as string;
 
-    // Ensure the status query parameter is provided
     if (!status) {
         return res.status(400).json({ message: 'Status query parameter is required.' });
     }
 
-    // Validate the status
-    const validStatuses: ApplicationStatus[] = ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'];
-    if (!validStatuses.includes(status)) {
-        return res.status(400).json({ message: 'Invalid status provided.' });
+    const validStatuses = Object.values(ApplicationStatus);
+
+    if (!validStatuses.includes(status as ApplicationStatus)) {
+        return res.status(400).json({ message: 'Invalid status value provided.' });
     }
 
     try {
-        const applications = applicationRepository.getAllApplications(status);
-        res.json(applications);
+        const applications = await applicationService.getApplicationsByStatus(status as ApplicationStatus);
+        res.status(200).json(applications);
     } catch (error) {
         console.error('Error fetching applications by status:', error);
-        res.status(500).json({ message: 'Internal server error.' });
+        res.status(500).json({ message: 'Failed to fetch job applications by status.' });
     }
 };
 
 /**
- * Handler to update the status of an application.
+ * Handles updating the status of an application.
  */
-export const updateApplicationStatus = (req: Request, res: Response) => {
+export const handleUpdateApplicationStatus = async (req: Request, res: Response) => {
     const applicationId = parseInt(req.params.id, 10);
     const { status } = req.body;
 
-    // Validate status
-    const validStatuses: ApplicationStatus[] = ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'];
-    if (!status || !validStatuses.includes(status)) {
-        return res.status(400).json({ message: 'Invalid or missing status.' });
+    if (isNaN(applicationId)) {
+        return res.status(400).json({ message: 'Invalid application ID.' });
+    }
+
+    if (!status) {
+        return res.status(400).json({ message: 'Status is required.' });
+    }
+
+    const validStatuses = Object.values(ApplicationStatus);
+
+    if (!validStatuses.includes(status as ApplicationStatus)) {
+        return res.status(400).json({ message: 'Invalid application status provided.' });
     }
 
     try {
-        const updatedApplication = applicationRepository.updateApplicationStatus(applicationId, status);
+        const updatedApplication = await applicationService.updateApplicationStatus(applicationId, status as ApplicationStatus);
         if (!updatedApplication) {
             return res.status(404).json({ message: 'Application not found.' });
         }
-        res.json(updatedApplication);
+        res.status(200).json({ message: 'Application status updated successfully.', application: updatedApplication });
     } catch (error) {
         console.error('Error updating application status:', error);
         res.status(500).json({ message: 'Internal server error.' });
     }
 };
 
-export const updateApplicationNotes = (req: Request, res: Response) => {
+/**
+ * Handles updating the notes of an application.
+ */
+export const handleUpdateApplicationNotes = async (req: Request, res: Response) => {
     const applicationId = parseInt(req.params.id, 10);
     const { notes } = req.body;
 
@@ -147,43 +102,45 @@ export const updateApplicationNotes = (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Notes must be a string.' });
     }
 
-    const updatedApplication = applicationRepository.updateNotes(applicationId, notes);
-
-    if (!updatedApplication) {
-        return res.status(404).json({ message: 'Application not found.' });
+    try {
+        const updatedApplication = await applicationService.updateApplicationNotes(applicationId, notes.trim());
+        if (!updatedApplication) {
+            return res.status(404).json({ message: 'Application not found.' });
+        }
+        res.status(200).json({ message: 'Notes updated successfully.', application: updatedApplication });
+    } catch (error) {
+        console.error('Error updating application notes:', error);
+        res.status(500).json({ message: 'Internal server error.' });
     }
-
-    res.status(200).json({ message: 'Notes updated successfully.', application: updatedApplication });
 };
 
 /**
- * Deletes a specific job application by ID.
+ * Handles deleting an application.
  */
-export const deleteApplication = (req: Request, res: Response) => {
+export const handleDeleteApplication = async (req: Request, res: Response) => {
     const applicationId = parseInt(req.params.id, 10);
 
     if (isNaN(applicationId)) {
         return res.status(400).json({ message: 'Invalid application ID.' });
     }
 
-    const application = applicationRepository.getApplicationById(applicationId);
-    if (!application) {
-        return res.status(404).json({ message: 'Application not found.' });
-    }
-
-    // Remove the application from the repository
-    const success = applicationRepository.deleteApplication(applicationId);
-    if (success) {
-        return res.status(200).json({ message: 'Application deleted successfully.' });
-    } else {
-        return res.status(500).json({ message: 'Failed to delete the application. Please try again.' });
+    try {
+        const success = await applicationService.deleteApplication(applicationId);
+        if (success) {
+            res.status(200).json({ message: 'Application deleted successfully.' });
+        } else {
+            res.status(404).json({ message: 'Application not found.' });
+        }
+    } catch (error) {
+        console.error('Error deleting application:', error);
+        res.status(500).json({ message: 'Failed to delete the application. Please try again.' });
     }
 };
 
 /**
- * Sets a reminder for a specific job application.
+ * Handles setting a reminder for an application.
  */
-export const setReminder = (req: Request, res: Response) => {
+export const handleSetReminder = async (req: Request, res: Response) => {
     const applicationId = parseInt(req.params.id, 10);
     const { reminderDate, message } = req.body;
 
@@ -195,18 +152,27 @@ export const setReminder = (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Invalid or missing reminderDate. It should be a valid ISO date string.' });
     }
 
-    const newReminder = applicationRepository.addReminder(applicationId, reminderDate, message);
-    if (!newReminder) {
-        return res.status(404).json({ message: 'Application not found. Cannot set reminder.' });
+    if (message && typeof message !== 'string') {
+        return res.status(400).json({ message: 'Reminder message must be a string.' });
     }
 
-    res.status(201).json({ message: 'Reminder set successfully.', reminder: newReminder });
+    try {
+        const newReminder = await applicationService.setReminder(applicationId, reminderDate, message);
+        if (!newReminder) {
+            return res.status(404).json({ message: 'Application not found. Cannot set reminder.' });
+        }
+
+        res.status(201).json({ message: 'Reminder set successfully.', reminder: newReminder });
+    } catch (error) {
+        console.error('Error setting reminder:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
 };
 
 /**
- * Updates a reminder for a specific job application.
+ * Handles updating a reminder.
  */
-export const updateReminderController = (req: Request, res: Response) => {
+export const handleUpdateReminder = async (req: Request, res: Response) => {
     const reminderId = parseInt(req.params.reminderId, 10);
     const { reminderDate, message } = req.body;
 
@@ -218,28 +184,42 @@ export const updateReminderController = (req: Request, res: Response) => {
         return res.status(400).json({ message: 'Invalid or missing reminderDate. It should be a valid ISO date string.' });
     }
 
-    const updatedReminder = applicationRepository.updateReminder(reminderId, reminderDate, message);
-    if (!updatedReminder) {
-        return res.status(404).json({ message: 'Reminder not found.' });
+    if (message && typeof message !== 'string') {
+        return res.status(400).json({ message: 'Reminder message must be a string.' });
     }
 
-    res.status(200).json({ message: 'Reminder updated successfully.', reminder: updatedReminder });
+    try {
+        const updatedReminder = await applicationService.updateReminder(reminderId, reminderDate, message);
+        if (!updatedReminder) {
+            return res.status(404).json({ message: 'Reminder not found.' });
+        }
+
+        res.status(200).json({ message: 'Reminder updated successfully.', reminder: updatedReminder });
+    } catch (error) {
+        console.error('Error updating reminder:', error);
+        res.status(500).json({ message: 'Internal server error.' });
+    }
 };
 
 /**
- * Deletes a reminder for a specific job application.
+ * Handles deleting a reminder.
  */
-export const deleteReminderController = (req: Request, res: Response) => {
+export const handleDeleteReminder = async (req: Request, res: Response) => {
     const reminderId = parseInt(req.params.reminderId, 10);
 
     if (isNaN(reminderId)) {
         return res.status(400).json({ message: 'Invalid reminder ID.' });
     }
 
-    const success = applicationRepository.deleteReminder(reminderId);
-    if (success) {
-        return res.status(200).json({ message: 'Reminder deleted successfully.' });
-    } else {
-        return res.status(404).json({ message: 'Reminder not found.' });
+    try {
+        const success = await applicationService.deleteReminder(reminderId);
+        if (success) {
+            res.status(200).json({ message: 'Reminder deleted successfully.' });
+        } else {
+            res.status(404).json({ message: 'Reminder not found.' });
+        }
+    } catch (error) {
+        console.error('Error deleting reminder:', error);
+        res.status(500).json({ message: 'Failed to delete the reminder. Please try again.' });
     }
 };

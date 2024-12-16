@@ -2,15 +2,14 @@
 
 import express from 'express';
 import { 
-    applyForJob, 
-    getApplications, 
-    getApplicationsByStatus,
-    updateApplicationStatus, 
-    updateApplicationNotes, 
-    deleteApplication, 
-    setReminder,
-    updateReminderController, 
-    deleteReminderController 
+    handleGetApplications, 
+    handleGetApplicationsByStatus,
+    handleUpdateApplicationStatus, 
+    handleUpdateApplicationNotes, 
+    handleDeleteApplication, 
+    handleSetReminder,
+    handleUpdateReminder, 
+    handleDeleteReminder 
 } from '../controller/applicationController'; 
 
 const router = express.Router();
@@ -48,7 +47,7 @@ const router = express.Router();
  *                   type: string
  *                   example: Failed to fetch job applications
  */
-router.get('/', getApplications);
+router.get('/', handleGetApplications);
 
 /**
  * @swagger
@@ -76,10 +75,18 @@ router.get('/', getApplications);
  *                 $ref: '#/components/schemas/Application'
  *       400:
  *         description: Missing or invalid status filter
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Missing or invalid status filter
  *       500:
  *         description: Internal server error
  */
-router.get('/status', getApplicationsByStatus);
+router.get('/status', handleGetApplicationsByStatus);
 
 /**
  * @swagger
@@ -141,81 +148,7 @@ router.get('/status', getApplicationsByStatus);
  *                   type: string
  *                   example: Application not found.
  */
-router.put('/:id', updateApplicationStatus);
-
-/**
- * @swagger
- * /jobs/{id}/apply:
- *   post:
- *     summary: Apply for a specific job by uploading resume and cover letter
- *     tags: [Applications]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: number
- *         description: The job ID to apply for
- *     requestBody:
- *       required: true
- *       content:
- *         multipart/form-data:
- *           schema:
- *             type: object
- *             required:
- *               - applicantName
- *               - applicantEmail
- *               - resume
- *               - coverLetter
- *             properties:
- *               applicantName:
- *                 type: string
- *                 example: John Doe
- *               applicantEmail:
- *                 type: string
- *                 format: email
- *                 example: johndoe@example.com
- *               resume:
- *                 type: string
- *                 format: binary
- *               coverLetter:
- *                 type: string
- *                 format: binary
- *     responses:
- *       201:
- *         description: Application submitted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Application submitted successfully.
- *                 application:
- *                   $ref: '#/components/schemas/Application'
- *       400:
- *         description: Missing required fields or invalid data
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Missing required fields.
- *       404:
- *         description: Job not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Job not found.
- */
-router.post('/jobs/:id/apply', applyForJob);
+router.put('/:id', handleUpdateApplicationStatus);
 
 /**
  * @swagger
@@ -261,7 +194,7 @@ router.post('/jobs/:id/apply', applyForJob);
  *       500:
  *         description: Internal server error
  */
-router.put('/:id/notes', updateApplicationNotes);
+router.put('/:id/notes', handleUpdateApplicationNotes);
 
 /**
  * @swagger
@@ -286,14 +219,39 @@ router.put('/:id/notes', updateApplicationNotes);
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: Application deleted successfully.
  *       400:
  *         description: Bad request (e.g., invalid ID)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid application ID.
  *       404:
  *         description: Application not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Application not found.
  *       500:
- *         description: Internal server error
+ *         description: Failed to delete the application
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Failed to delete the application. Please try again.
  */
-router.delete('/:id/', deleteApplication);
+router.delete('/:id/', handleDeleteApplication);
 
 /**
  * @swagger
@@ -338,12 +296,28 @@ router.delete('/:id/', deleteApplication);
  *                   $ref: '#/components/schemas/Reminder'
  *       400:
  *         description: Bad request (e.g., invalid input)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Invalid or missing reminderDate.
  *       404:
  *         description: Application not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Application not found. Cannot set reminder.
  *       500:
  *         description: Internal server error
  */
-router.post('/:id/reminder', setReminder);
+router.post('/:id/reminder', handleSetReminder);
 
 /**
  * @swagger
@@ -393,7 +367,7 @@ router.post('/:id/reminder', setReminder);
  *       500:
  *         description: Internal server error
  */
-router.put('/reminders/:reminderId', updateReminderController);
+router.put('/reminders/:reminderId', handleUpdateReminder);
 
 /**
  * @swagger
@@ -418,13 +392,20 @@ router.put('/reminders/:reminderId', updateReminderController);
  *               properties:
  *                 message:
  *                   type: string
+ *                   example: Reminder deleted successfully.
  *       404:
  *         description: Reminder not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Reminder not found.
  *       500:
  *         description: Internal server error
  */
-router.delete('/reminders/:reminderId', deleteReminderController);
-
-
+router.delete('/reminders/:reminderId', handleDeleteReminder);
 
 export default router;

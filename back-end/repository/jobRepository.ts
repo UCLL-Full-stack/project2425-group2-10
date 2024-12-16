@@ -1,53 +1,149 @@
-// back-end/repository/jobRepository.ts
+// back-end/src/repository/jobRepository.ts
 
-import { Job } from '../types';
+import { PrismaClient, Job as PrismaJob, Skill as PrismaSkill } from '@prisma/client';
+import { Job, NewJob } from '../types';
+import { Job as JobModel } from '../model/job'; // Domain model
 
-let jobs: Job[] = [];
-let nextJobId = 1; // Initialize job ID counter
+const prisma = new PrismaClient();
 
-/**
- * Repository for managing jobs.
- */
 export const jobRepository = {
     /**
-     * Adds a new job to the repository.
-     * @param job - The job to add (without id).
-     * @returns The added job with an assigned id.
+     * Adds a new job to the database along with its required skills.
+     * It connects existing skills or creates new ones if they don't exist.
+     * 
+     * @param newJob - The job data to add, including skill names.
+     * @returns The created Job object.
      */
-    addJob: (job: Omit<Job, 'id'>): Job => {
-        const newJob: Job = { ...job, id: nextJobId++ };
-        jobs.push(newJob);
-        return newJob;
+    addJob: async (newJob: NewJob): Promise<Job> => {
+        try {
+            // Prepare the skills: connect existing or create new
+            const skills = newJob.skills.map(skillName => ({
+                where: { name: skillName },
+                create: { name: skillName },
+            }));
+
+            const prismaJob: PrismaJob & { jobSkills: { skill: PrismaSkill }[] } = await prisma.job.create({
+                data: {
+                    companyName: newJob.companyName,
+                    jobTitle: newJob.jobTitle,
+                    date: newJob.date,
+                    status: newJob.status,
+                    description: newJob.description,
+                    adminId: newJob.adminId,
+                    jobSkills: {
+                        create: skills.map(skill => ({
+                            skill: {
+                                connectOrCreate: skill,
+                            },
+                        })),
+                    },
+                },
+                include: {
+                    jobSkills: {
+                        include: {
+                            skill: true,
+                        },
+                    },
+                    applications: true, // Include relations if needed
+                },
+            });
+
+            // Map PrismaJob to domain Job
+            const domainJob = JobModel.fromPrisma(prismaJob);
+
+            return domainJob;
+        } catch (error: unknown) {
+            console.error('Error in addJob:', error);
+            throw new Error('Failed to add job.');
+        }
     },
 
     /**
-     * Retrieves all jobs from the repository.
-     * @returns An array of jobs.
+     * Retrieves all jobs from the database along with their associated skills.
+     * 
+     * @returns An array of Job objects.
      */
-    getAllJobs: (): Job[] => {
-        return jobs;
+    getAllJobs: async (): Promise<Job[]> => {
+        try {
+            const prismaJobs: (PrismaJob & {
+                jobSkills: { skill: PrismaSkill }[];
+                applications: any[]; // Replace 'any' with your Application type if defined
+            })[] = await prisma.job.findMany({
+                include: {
+                    jobSkills: {
+                        include: {
+                            skill: true,
+                        },
+                    },
+                    applications: true, // Include relations if needed
+                },
+            });
+
+            // Map each PrismaJob to domain Job
+            const domainJobs = prismaJobs.map(prismaJob => JobModel.fromPrisma(prismaJob));
+
+            return domainJobs;
+        } catch (error: unknown) {
+            console.error('Error in getAllJobs:', error);
+            throw new Error('Failed to retrieve jobs.');
+        }
     },
 
     /**
-     * Retrieves a job by its ID.
-     * @param id - The ID of the job.
-     * @returns The job if found, otherwise undefined.
+     * Retrieves a single job by its ID along with its associated skills.
+     * 
+     * @param jobId - The ID of the job to retrieve.
+     * @returns The Job object or null if not found.
      */
-    getJobById: (id: number): Job | undefined => {
-        return jobs.find(job => job.id === id);
+    getJobById: async (jobId: number): Promise<Job | null> => {
+        try {
+            const prismaJob: PrismaJob & {
+                jobSkills: { skill: PrismaSkill }[];
+                applications: any[]; // Replace 'any' with your Application type if defined
+            } | null = await prisma.job.findUnique({
+                where: { id: jobId },
+                include: {
+                    jobSkills: {
+                        include: {
+                            skill: true,
+                        },
+                    },
+                    applications: true, // Include relations if needed
+                },
+            });
+
+            if (!prismaJob) {
+                return null;
+            }
+
+            // Map PrismaJob to domain Job
+            const domainJob = JobModel.fromPrisma(prismaJob);
+
+            return domainJob;
+        } catch (error: unknown) {
+            console.error('Error in getJobById:', error);
+            throw new Error('Failed to retrieve job.');
+        }
     },
 
-        /**
-     * Deletes a job by its ID.
-     * @param id - The ID of the job to delete.
-     * @returns True if deletion was successful, otherwise false.
+    /**
+     * Deletes a job by its ID from the database.
+     * Also deletes associated JobSkill entries due to cascading deletes.
+     * 
+     * @param jobId - The ID of the job to delete.
+     * @returns A boolean indicating whether the deletion was successful.
      */
-        deleteJob: (id: number): boolean => {
-          const index = jobs.findIndex(job => job.id === id);
-          if (index !== -1) {
-              jobs.splice(index, 1);
-              return true;
-          }
-          return false;
+    deleteJob: async (jobId: number): Promise<boolean> => {
+        try {
+            await prisma.job.delete({
+                where: { id: jobId },
+            });
+            return true;
+        } catch (error: unknown) {
+            console.error('Error in deleteJob:', error);
+            throw new Error('Failed to delete job.');
+        }
     },
+
+    // ... Other repository methods as needed
 };

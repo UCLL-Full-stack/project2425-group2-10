@@ -1,14 +1,35 @@
 // back-end/types/index.ts
 
+export enum ApplicationStatus {
+    Applied = 'Applied',
+    Pending = 'Pending',
+    Interviewing = 'Interviewing',
+    Rejected = 'Rejected',
+    Accepted = 'Accepted',
+}
+
+export enum JobStatus {
+    Open = 'Open',
+    Closed = 'Closed',
+    Pending = 'Pending',
+    // Add other statuses as needed
+}
+
+export interface Skill {
+    id: number;
+    name: string;
+}
 export interface Job {
     id: number;
     companyName: string;
     jobTitle: string;
-    date: string;
-    status: string;
-    description?: string;
-    requiredSkills?: string[];
-    adminId: number;
+    date: Date; // Changed from string to Date
+    status: JobStatus; // Changed to enum
+    description: string;
+    skills: Skill[]; // Associated skills
+    adminId: number; // Added as required
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 export interface Admin {
@@ -19,39 +40,45 @@ export interface Admin {
 
 export interface Application {
     id: number;
-    jobTitle: string;
-    companyName: string;
-    appliedAt: string; // ISO string
-    status: ApplicationStatus;
-    resumeUrl: string;
-    coverLetterUrl: string;
-    jobId: number; // Assuming applications are associated with jobs
-    notes?: string;
-    reminder?: Reminder;
-}
-
-export type NewApplication = {
     jobId: number;
     applicantName: string;
     applicantEmail: string;
     resumeUrl: string;
     coverLetterUrl: string;
-    appliedAt: string;
-    status: ApplicationStatus;
-    jobTitle: string;
-    companyName: string;
+    appliedAt: Date; // Changed from string to Date
+    status: ApplicationStatus; // Changed to enum
     notes?: string;
-};
+    reminders: Reminder[];
+    createdAt: Date;
+    updatedAt: Date;
+    job?: Job; // Optional, if included
+}
 
-export interface Application extends NewApplication {
-    id: number;
+export interface NewApplication {
+    jobId: number;
+    applicantName: string;
+    applicantEmail: string;
+    resumeUrl: string;
+    coverLetterUrl: string;
+    appliedAt: Date; // Changed from string to Date
+    status: ApplicationStatus; // Changed to enum
+    notes?: string;
 }
 
 export interface Reminder {
     id: number;
     applicationId: number;
-    reminderDate: string; // ISO date string
-    message?: string; // Optional message for the reminder
+    reminderDate: Date;
+    message?: string;
+    createdAt: Date;
+    updatedAt: Date;
 }
 
-export type ApplicationStatus = 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';
+export interface Application extends NewApplication {
+    id: number;
+    notes?: string;
+}
+
+export type NewJob = Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'skills'> & {
+    skills: string[]; // Array of skill names
+};

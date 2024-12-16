@@ -1,35 +1,63 @@
-// back-end/model/application.ts
+import { ApplicationStatus } from '../types';
+import { Reminder } from './reminder';
 
-import mongoose, { Document, Schema } from 'mongoose';
+export class Application {
+    id: number;
+    jobId: number;
+    applicantName: string;
+    applicantEmail: string;
+    resumeUrl: string;
+    coverLetterUrl: string;
+    appliedAt: Date;
+    status: ApplicationStatus;
+    notes?: string;
+    reminders: Reminder[];
+    createdAt: Date;
+    updatedAt: Date;
 
-export interface IApplication extends Document {
-  jobId: number;
-  applicantName: string;
-  applicantEmail: string;
-  resumeUrl: string;
-  coverLetterUrl: string;
-  appliedAt: string; // ISO date string
-  jobTitle?: string;
-  companyName?: string;
-  status: 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted'; // Status with allowed values
-  notes: string;
+    constructor(
+        id: number,
+        jobId: number,
+        applicantName: string,
+        applicantEmail: string,
+        resumeUrl: string,
+        coverLetterUrl: string,
+        appliedAt: Date,
+        status: ApplicationStatus,
+        notes: string | undefined,
+        reminders: Reminder[],
+        createdAt: Date,
+        updatedAt: Date
+    ) {
+        this.id = id;
+        this.jobId = jobId;
+        this.applicantName = applicantName;
+        this.applicantEmail = applicantEmail;
+        this.resumeUrl = resumeUrl;
+        this.coverLetterUrl = coverLetterUrl;
+        this.appliedAt = appliedAt;
+        this.status = status;
+        this.notes = notes;
+        this.reminders = reminders;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    static fromPrisma(prismaApp: any): Application {
+        const reminders = prismaApp.reminders.map((rem: any) => Reminder.fromPrisma(rem));
+        return new Application(
+            prismaApp.id,
+            prismaApp.jobId,
+            prismaApp.applicantName,
+            prismaApp.applicantEmail,
+            prismaApp.resumeUrl,
+            prismaApp.coverLetterUrl,
+            prismaApp.appliedAt,
+            prismaApp.status,
+            prismaApp.notes,
+            reminders,
+            prismaApp.createdAt,
+            prismaApp.updatedAt
+        );
+    }
 }
-
-const ApplicationSchema: Schema = new Schema<IApplication>({
-  jobId: { type: Number, required: true },
-  applicantName: { type: String, required: true },
-  applicantEmail: { type: String, required: true },
-  resumeUrl: { type: String, required: true },
-  coverLetterUrl: { type: String, required: true },
-  appliedAt: { type: String, required: true },
-  jobTitle: { type: String },
-  companyName: { type: String },
-  status: {
-    type: String,
-    enum: ['Applied', 'Pending', 'Interviewing', 'Rejected', 'Accepted'],
-    default: 'Applied',
-  },
-  notes: { type: String },
-});
-
-export default mongoose.model<IApplication>('Application', ApplicationSchema);
