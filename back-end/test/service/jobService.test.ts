@@ -95,20 +95,20 @@ describe('Job Service', () => {
                 // ... other jobs
             ];
 
-            (jobRepository.getAllJobs as jest.Mock).mockResolvedValue(jobs);
+            (jobRepository.getJobs as jest.Mock).mockResolvedValue(jobs);
 
-            const result = await jobService.getAllJobs();
+            const result = await jobService.getJobs();
 
-            expect(jobRepository.getAllJobs).toHaveBeenCalled();
+            expect(jobRepository.getJobs).toHaveBeenCalled();
             expect(result).toBe(jobs);
         });
 
         it('should propagate repository errors', async () => {
-            (jobRepository.getAllJobs as jest.Mock).mockRejectedValue(new Error('Repository error'));
+            (jobRepository.getJobs as jest.Mock).mockRejectedValue(new Error('Repository error'));
 
-            await expect(jobService.getAllJobs()).rejects.toThrow('Failed to retrieve jobs.');
+            await expect(jobService.getJobs()).rejects.toThrow('Failed to retrieve jobs.');
 
-            expect(jobRepository.getAllJobs).toHaveBeenCalled();
+            expect(jobRepository.getJobs).toHaveBeenCalled();
         });
     });
 

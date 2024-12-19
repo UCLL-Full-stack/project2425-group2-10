@@ -1,6 +1,6 @@
 import { Job } from '../types';
 
-const getAllJobs = () => {
+const getJobs = () => {
   return fetch(`${process.env.NEXT_PUBLIC_API_URL}/jobs`, {
     method: 'GET',
     headers: {
@@ -54,7 +54,7 @@ const applyForJob = (jobId: number, formData: FormData) => {
 };
 
 const JobService = {
-  getAllJobs,
+  getJobs,
   getJobById,
   createJob,
   deleteJob,

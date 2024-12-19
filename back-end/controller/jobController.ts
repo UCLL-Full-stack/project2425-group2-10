@@ -65,7 +65,7 @@ export const addJob = async (req: Request, res: Response) => {
  */
 export const getJobs = async (req: Request, res: Response) => {
     try {
-        const jobs = await jobRepository.getAllJobs();
+        const jobs = await jobRepository.getJobs();
         res.status(200).json(jobs);
     } catch (error: unknown) {
         console.error('Error fetching jobs:', error);

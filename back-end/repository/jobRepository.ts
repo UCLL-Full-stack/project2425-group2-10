@@ -63,7 +63,7 @@ export const jobRepository = {
      * 
      * @returns An array of Job objects.
      */
-    getAllJobs: async (): Promise<Job[]> => {
+    getJobs: async (): Promise<Job[]> => {
         try {
             const prismaJobs: (PrismaJob & {
                 jobSkills: { skill: PrismaSkill }[];
