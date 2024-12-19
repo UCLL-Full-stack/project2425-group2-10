@@ -19,7 +19,7 @@ const HomePage: React.FC = () => {
 
             try {
                 // fetchJobs now returns a fetch Promise.
-                const response = await JobService.getAllJobs();
+                const response = await JobService.getJobs();
                 if (!response.ok) {
                     // Extract the error message from the response
                     const errorData = await response.json();

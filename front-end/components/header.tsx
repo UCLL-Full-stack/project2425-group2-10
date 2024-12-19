@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Menu } from '@headlessui/react';
 import { ChevronDownIcon, MenuIcon, XIcon, HomeIcon, ClipboardListIcon, PlusCircleIcon, LoginIcon, UserAddIcon } from '@heroicons/react/outline';
 import { useRouter } from 'next/router';
+import LanguageDropdown from './LanguageDropdown'; // Import the LanguageDropdown component
 
 const navigation = [
   { name: 'Home', href: '/', icon: HomeIcon },
@@ -29,7 +30,7 @@ const Header: React.FC = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex space-x-5">
+        <nav className="hidden md:flex space-x-5 items-center">
           {navigation.map((item) => (
             <Link
               key={item.name}
@@ -55,11 +56,14 @@ const Header: React.FC = () => {
               <UserAddIcon className="h-5 w-5" />
               <span>Register</span>
             </Link>
+
+            {/* Language Dropdown Positioned After Register */}
+            <LanguageDropdown />
           </div>
         </nav>
 
         {/* Mobile Menu Button */}
-        <div className="md:hidden">
+        <div className="md:hidden flex items-center space-x-2">
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="focus:outline-none"
@@ -107,6 +111,11 @@ const Header: React.FC = () => {
               <UserAddIcon className="h-5 w-5" />
               <span>Register</span>
             </Link>
+
+            {/* Language Dropdown Positioned After Register in Mobile Menu */}
+            <div className="px-3 py-2">
+              <LanguageDropdown />
+            </div>
           </div>
         </nav>
       )}

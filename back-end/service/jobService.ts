@@ -49,13 +49,13 @@ export const jobService = {
      * @returns An array of Job objects.
      * @throws Error if repository operation fails.
      */
-    getAllJobs: async (): Promise<Job[]> => {
+    getJobs: async (): Promise<Job[]> => {
         try {
             // Retrieve jobs using the repository
-            const jobs = await jobRepository.getAllJobs();
+            const jobs = await jobRepository.getJobs();
             return jobs;
         } catch (error: unknown) {
-            console.error('Error in getAllJobs:', error);
+            console.error('Error in getJobs:', error);
             throw new Error('Failed to retrieve jobs.');
         }
     },

@@ -76,7 +76,7 @@ describe('Job Service', () => {
         });
     });
 
-    describe('getAllJobs', () => {
+    describe('getJobs', () => {
         it('should retrieve all jobs successfully', async () => {
             const jobs: Job[] = [
                 new JobModel(
