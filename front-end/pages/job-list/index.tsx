@@ -3,6 +3,7 @@ import JobCard from "@components/JobCard"; // Import the JobCard component
 import { Job } from "../../types"; // Assuming the Job type is defined in front-end/types
 import JobService from "@services/JobService"; // Import the JobService to fetch jobs
 import Navbar from "@components/Navbar"; 
+import Home from "@components/Home";
 
 const JobListPage: React.FC = () => {
   // Define the state types explicitly
@@ -31,6 +32,7 @@ const JobListPage: React.FC = () => {
     return (
       <div>
         <Navbar />  {/* Display the Navbar */}
+        <Home />
         <div>Loading...</div>
       </div>
     );
@@ -41,6 +43,7 @@ const JobListPage: React.FC = () => {
     return (
       <div>
         <Navbar />  {/* Display the Navbar */}
+        <Home />
         <div>Error: {error}</div>
       </div>
     );
@@ -49,6 +52,7 @@ const JobListPage: React.FC = () => {
   return (
     <div>
       <Navbar />  {/* Display the Navbar */}
+      <Home />
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-4">
         {jobs.map((job) => (
           <JobCard key={job.id} job={job} />  // Render each job as a JobCard component

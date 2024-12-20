@@ -1,7 +1,6 @@
 import React from "react";
 import Link from "next/link"; // Import Link from Next.js for client-side navigation
 import { Job } from "../types";  // Ensure that Job type is defined in front-end/types
-
 interface JobCardProps {
   job: Job;  // Define the prop type as Job
 }

@@ -1,6 +1,8 @@
 // components/Navbar.tsx
 import React from "react";
 import Link from "next/link"; // Import Link from Next.js for navigation
+import LanguageSwitcher from './LanguageSwitcher';
+
 
 const Navbar: React.FC = () => {
   return (
@@ -23,6 +25,7 @@ const Navbar: React.FC = () => {
             <span className="text-white hover:text-gray-200 cursor-pointer">Register</span>
           </Link>
         </div>
+        <LanguageSwitcher /> {/* Add the language switcher here */}
       </div>
     </nav>
   );

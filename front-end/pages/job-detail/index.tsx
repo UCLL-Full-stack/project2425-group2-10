@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";  // Use Next.js useRouter hook
 import JobService from "@services/JobService";  // Import the service to fetch a single job
-import Navbar from "@components/Navbar";  // Import the Navbar component
+import Navbar from "@components/Navbar";  
+import Home from "@components/Home";// Import the Navbar component
 
 const JobDetailPage: React.FC = () => {
   const router = useRouter();
@@ -61,6 +62,7 @@ const JobDetailPage: React.FC = () => {
           </button>
         </div>
       </div>
+      <Home />
     </div>
   );
 };

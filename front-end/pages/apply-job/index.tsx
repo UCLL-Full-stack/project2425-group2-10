@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/router";  // Import Next.js useRouter for routing
 import ApplicationService from "@services/ApplicationService";  // Import the application service
 import Navbar from "@components/Navbar";  // Import the Navbar component
+import Home from "@components/Home";
 
 const ApplyJobPage: React.FC = () => {
   const router = useRouter();
@@ -107,6 +108,7 @@ const ApplyJobPage: React.FC = () => {
           </div>
         </form>
       </div>
+      <Home />
     </div>
   );
 };
