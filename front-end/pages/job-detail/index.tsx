@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/router";  // Use Next.js useRouter hook
+import { useRouter } from "next/router";  // Import Next.js useRouter hook
 import JobService from "@services/JobService";  // Import the service to fetch a single job
-import Navbar from "@components/Navbar";  // Import the Navbar component
+import Navbar from "@components/Navbar"; // Import Navbar component
 
 const JobDetailPage: React.FC = () => {
   const router = useRouter();
-  const { id } = router.query;  // Get the job ID from the URL
+  const { id } = router.query;  // Get the job ID from the URL using useRouter
   const [job, setJob] = useState<any | null>(null);  // State to store job details
   const [loading, setLoading] = useState<boolean>(true);  // Loading state
   const [error, setError] = useState<string | null>(null);  // Error state

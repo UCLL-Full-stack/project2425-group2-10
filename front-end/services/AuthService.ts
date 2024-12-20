@@ -49,6 +49,12 @@ export const loginUser = async (data: { email: string; password: string }) => {
     }
 
     const result = await response.json();  // Parse the response body as JSON
+
+    // Store the token after successful login (if available)
+    if (result.token) {
+      localStorage.setItem("token", result.token);  // Store the token in localStorage
+    }
+
     return result;
   } catch (error: any) {
     console.error("Error logging in:", error.message);  // Log the error for debugging

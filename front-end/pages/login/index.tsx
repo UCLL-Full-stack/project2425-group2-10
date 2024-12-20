@@ -20,7 +20,7 @@ const LoginPage: React.FC = () => {
     try {
       const response = await AuthService.loginUser(data);  // Call loginUser service function
       localStorage.setItem("token", response.token); // Store the JWT token in local storage
-      router.push("/job-list"); // Use Next.js's router.push() to navigate to the jobs page
+      router.push("/jobs"); // Use Next.js's router.push() to navigate to the jobs page
     } catch (error) {
       setError("Invalid email or password.");  // Set error message if login fails
     } finally {

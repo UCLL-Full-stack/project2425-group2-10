@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useRouter } from "next/router";  // Import Next.js useRouter for routing
+import { useRouter } from "next/router";  // For navigation
 import ApplicationService from "@services/ApplicationService";  // Import the application service
 import Navbar from "@components/Navbar";  // Import the Navbar component
 
@@ -8,10 +8,11 @@ const ApplyJobPage: React.FC = () => {
   const { id } = router.query;  // Get the job ID from the URL parameters
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [resume, setResume] = useState("");
+  const [resume, setResume] = useState<File | null>(null); // Handle resume as a file
   const [coverLetter, setCoverLetter] = useState("");
   const [question, setQuestion] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(""); // Error state to handle any issues during submission
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,15 +24,40 @@ const ApplyJobPage: React.FC = () => {
       return;
     }
 
+    // Check if a resume file is selected
+    if (!resume) {
+      alert("Please upload your resume.");
+      return;
+    }
+
+    // Prepare FormData to send both text and file data
+    const applicationData = new FormData();
+    applicationData.append("fullName", fullName);
+    applicationData.append("email", email);
+    applicationData.append("coverLetter", coverLetter);
+    applicationData.append("question", question);
+
+    // Append the resume file to FormData directly
+    applicationData.append("file", resume);  // The key name 'file' for the file upload
+
     setLoading(true);
-    const applicationData = { fullName, email, resume, coverLetter, question };
+    setError("");  // Clear previous errors
 
     try {
-      await ApplicationService.applyForJob(id as string, applicationData);  // Apply for the job using the job ID
-      alert("Your application has been submitted!");
-      router.push("/jobs");  // Redirect to the jobs page after successful application
-    } catch (error) {
-      alert("Failed to apply for the job.");
+      // Send the FormData to the backend API
+      const response = await ApplicationService.applyForJob(id as string, applicationData);
+
+      // Check the response (optional, depending on backend structure)
+      if (response && response.status === "success") {
+        alert("Your application has been submitted!");
+        router.push("/jobs");  // Redirect to the jobs page after successful application
+      } else {
+        throw new Error("Failed to apply for the job. Please try again.");
+      }
+    } catch (error: any) {
+      // Handle error if the request fails
+      setError(error.message || "Failed to apply for the job.");
+      console.error("Error applying for the job:", error);
     } finally {
       setLoading(false);
     }
@@ -42,6 +68,7 @@ const ApplyJobPage: React.FC = () => {
       <Navbar />  {/* Include Navbar at the top of the page */}
       <div className="max-w-3xl mx-auto p-4">
         <h2 className="text-3xl font-semibold text-gray-800 mb-4">Apply for the Job</h2>
+        {error && <div className="text-red-600 mb-4">{error}</div>} {/* Display error message */}
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
             <label htmlFor="fullName" className="block text-gray-700">Full Name</label>
@@ -70,7 +97,7 @@ const ApplyJobPage: React.FC = () => {
             <input
               type="file"
               id="resume"
-              onChange={(e) => setResume(e.target.files ? e.target.files[0].name : "")}
+              onChange={(e) => setResume(e.target.files ? e.target.files[0] : null)}
               className="w-full px-4 py-2 mt-2 border rounded-md"
               required
             />
