@@ -1,88 +1,82 @@
-const getAllApplications = () => {
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications`, {
-      method: "GET",
+// services/ApplicationService.ts
+
+// Apply for a job
+export const applyForJob = async (jobId: string, data: any) => {
+  try {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;  // Get API URL from environment variables
+    const response = await fetch(`${API_URL}/applications/${jobId}`, {
+      method: 'POST',  // HTTP method (POST)
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',  // Set Content-Type to JSON
+      },
+      body: JSON.stringify(data),  // Convert data to JSON
+    });
+
+    // Check if the response is okay (status code 200-299)
+    if (!response.ok) {
+      throw new Error(`Error applying for job: ${response.statusText}`);
+    }
+
+    const result = await response.json();  // Parse the response body as JSON
+    return result;
+  } catch (error: any) {
+    console.error("Error applying for job:", error.message);
+    throw error;  // Rethrow the error to be handled by the calling function
+  }
+};
+
+// Get applications by user ID
+export const getApplicationsByUserId = async (userId: string) => {
+  try {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;  // Get API URL from environment variables
+    const response = await fetch(`${API_URL}/applications/my-applications?userId=${userId}`, {
+      method: 'GET',  // HTTP method (GET)
+      headers: {
+        'Content-Type': 'application/json',  // Set Content-Type to JSON
       },
     });
-  };
-  
-  const getApplicationsByStatus = (status: string) => {
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/status?status=${encodeURIComponent(status)}`, {
-      method: "GET",
+
+    // Check if the response is okay (status code 200-299)
+    if (!response.ok) {
+      throw new Error(`Error fetching applications by user ID: ${response.statusText}`);
+    }
+
+    const data = await response.json();  // Parse the response body as JSON
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching applications by user ID:", error.message);
+    throw error;  // Rethrow the error to be handled by the calling function
+  }
+};
+
+// Get applications by job ID (for recruiter/admin)
+export const getApplicationsByJobId = async (jobId: string) => {
+  try {
+    const API_URL = process.env.NEXT_PUBLIC_API_URL;  // Get API URL from environment variables
+    const response = await fetch(`${API_URL}/applications/${jobId}`, {
+      method: 'GET',  // HTTP method (GET)
       headers: {
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',  // Set Content-Type to JSON
       },
     });
-  };
-  
-  const updateApplicationStatus = (applicationId: number, newStatus: string) => {
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${applicationId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ status: newStatus }),
-    });
-  };
-  
-  const updateApplicationNotes = (applicationId: number, notes: string) => {
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${applicationId}/notes`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ notes }),
-    });
-  };
-  
-  const deleteApplication = (applicationId: number) => {
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${applicationId}/`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  };
-  
-  const setReminder = (applicationId: number, reminderDate: string, message?: string) => {
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/${applicationId}/reminder`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ reminderDate, message }),
-    });
-  };
-  
-  const updateReminder = (reminderId: number, reminderDate: string, message?: string) => {
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/reminders/${reminderId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ reminderDate, message }),
-    });
-  };
-  
-  const deleteReminder = (reminderId: number) => {
-    return fetch(`${process.env.NEXT_PUBLIC_API_URL}/applications/reminders/${reminderId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-  };
-  
-  const ApplicationService = {
-    getAllApplications,
-    getApplicationsByStatus,
-    updateApplicationStatus,
-    updateApplicationNotes,
-    deleteApplication,
-    setReminder,
-    updateReminder,
-    deleteReminder,
-  };
-  
-  export default ApplicationService;
+
+    // Check if the response is okay (status code 200-299)
+    if (!response.ok) {
+      throw new Error(`Error fetching applications by job ID: ${response.statusText}`);
+    }
+
+    const data = await response.json();  // Parse the response body as JSON
+    return data;
+  } catch (error: any) {
+    console.error("Error fetching applications by job ID:", error.message);
+    throw error;  // Rethrow the error to be handled by the calling function
+  }
+};
+
+const ApplicationService = {
+  applyForJob,
+  getApplicationsByUserId,
+  getApplicationsByJobId
+}
+
+export default ApplicationService;

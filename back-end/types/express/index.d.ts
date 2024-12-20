@@ -1,10 +1,10 @@
-// back-end/types/express/index.d.ts
+import { Request } from "express";
 
-import 'express';
-import { Express } from 'express-serve-static-core';
-
-declare module 'express-serve-static-core' {
-    interface Request {
-        files: { [fieldname: string]: Express.Multer.File[] };
-    }
+declare module "express" {
+  export interface Request {
+    user?: {
+      id: string;
+      role: string;
+    };
+  }
 }

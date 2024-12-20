@@ -1,239 +1,133 @@
-// back-end/routes/jobRoutes.ts
-
-import express from 'express';
-import multer from 'multer';
-import path from 'path';
-import { addJob, getJobs, applyForJob, deleteJob } from '../controller/jobController';
+import express from "express";
+import { getJobs, createJob, updateJob, deleteJob } from "../controllers/jobController";
+import { authenticateUser } from "../middleware/authenticateUser";
+import { authorizeRole } from "../middleware/authorizeRole";
 
 const router = express.Router();
-
-// Multer Configuration for File Uploads
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: function (req, file, cb) {
-      if (file.fieldname === 'resume') {
-        cb(null, path.join(__dirname, '../uploads/resumes'));
-      } else if (file.fieldname === 'coverLetter') {
-        cb(null, path.join(__dirname, '../uploads/coverLetters'));
-      } else {
-        cb(new Error('Invalid field name'), '');
-      }
-    },
-    filename: function (req, file, cb) {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-      cb(null, uniqueSuffix + '-' + file.originalname);
-    },
-  }),
-  fileFilter: (req, file, cb) => {
-    const allowedMimeTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ];
-    if (allowedMimeTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type. Only PDF and DOCX are allowed.'));
-    }
-  },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-});
-
-// Routes
-
-/**
- * @swagger
- * tags:
- *   name: Jobs
- *   description: API for managing job opportunities
- */
-
-/**
- * @swagger
- * /jobs:
- *   post:
- *     summary: Add a new job opportunity
- *     tags: [Jobs]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Job'
- *     responses:
- *       201:
- *         description: Job added successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Job added successfully.
- *                 job:
- *                   $ref: '#/components/schemas/Job'
- *       400:
- *         description: Missing required fields or invalid data
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Missing required fields.
- */
-router.post('/', addJob);
 
 /**
  * @swagger
  * /jobs:
  *   get:
- *     summary: Get all job opportunities
- *     tags: [Jobs]
+ *     summary: Get all job listings
  *     responses:
  *       200:
- *         description: A list of job opportunities
+ *         description: List of jobs
  *         content:
  *           application/json:
  *             schema:
  *               type: array
  *               items:
- *                 $ref: '#/components/schemas/Job'
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   companyName:
+ *                     type: string
+ *                   title:
+ *                     type: string
+ *                   experience:
+ *                     type: string
+ *                   description:
+ *                     type: string
+ *                   skills:
+ *                     type: string
+ *                   status:
+ *                     type: string
+ *                   createdAt:
+ *                     type: string
+ *                   postedById:
+ *                     type: string
  */
-router.get('/', getJobs);
+router.get("/", authenticateUser, getJobs);
 
 /**
  * @swagger
- * /jobs/{id}/apply:
+ * /jobs:
  *   post:
- *     summary: Apply for a specific job by uploading resume and cover letter
- *     tags: [Jobs]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: number
- *         description: The job ID to apply for
+ *     summary: Create a new job
  *     requestBody:
  *       required: true
  *       content:
- *         multipart/form-data:
+ *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - applicantName
- *               - applicantEmail
- *               - resume
- *               - coverLetter
  *             properties:
- *               applicantName:
+ *               companyName:
  *                 type: string
- *               applicantEmail:
+ *               title:
  *                 type: string
- *                 format: email
- *               resume:
+ *               experience:
  *                 type: string
- *                 format: binary
- *               coverLetter:
+ *               description:
  *                 type: string
- *                 format: binary
+ *               skills:
+ *                 type: string
+ *               status:
+ *                 type: string
  *     responses:
  *       201:
- *         description: Application submitted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Application submitted successfully.
- *                 application:
- *                   $ref: '#/components/schemas/Application'
- *       400:
- *         description: Missing required fields or invalid data
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Missing required fields.
+ *         description: Job created successfully
+ */
+router.post("/", authenticateUser, authorizeRole(["admin", "recruiter"]), createJob);
+
+/**
+ * @swagger
+ * /jobs/{id}:
+ *   put:
+ *     summary: Update an existing job
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: Job ID
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               companyName:
+ *                 type: string
+ *               title:
+ *                 type: string
+ *               experience:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               skills:
+ *                 type: string
+ *               status:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Job updated successfully
  *       404:
  *         description: Job not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Job not found.
  */
-router.post('/:id/apply', upload.fields([
-  { name: 'resume', maxCount: 1 },
-  { name: 'coverLetter', maxCount: 1 },
-]), applyForJob);
+router.put("/:id", authenticateUser, authorizeRole(["admin", "recruiter"]), updateJob);
 
 /**
  * @swagger
  * /jobs/{id}:
  *   delete:
- *     summary: Discard (delete) a specific job by ID
- *     tags: [Jobs]
+ *     summary: Delete a job
  *     parameters:
- *       - in: path
- *         name: id
+ *       - name: id
+ *         in: path
  *         required: true
+ *         description: Job ID
  *         schema:
- *           type: number
- *         description: The job ID to discard
+ *           type: string
  *     responses:
  *       200:
- *         description: Job discarded successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Job discarded successfully.
- *       400:
- *         description: Invalid job ID
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Invalid job ID.
+ *         description: Job deleted successfully
  *       404:
  *         description: Job not found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Job not found.
- *       500:
- *         description: Failed to discard the job
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Failed to discard the job. Please try again.
  */
-router.delete('/:id', deleteJob);
+router.delete("/:id", authenticateUser, authorizeRole(["admin", "recruiter"]), deleteJob);
 
 export default router;

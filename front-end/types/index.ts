@@ -1,42 +1,76 @@
-// front-end/types/index.ts
-
+// Type for a Job object
 export interface Job {
-  id: number;
-  companyName: string;
-  jobTitle: string;
-  date: string; // ISO date string (e.g., "2024-05-20")
-  status: string; // e.g., "Open", "Paused", "Filled", "Closed"
-  description?: string;
-  skills?: string[]; // Changed from 'requiredSkills' to 'skills' for consistency
-  adminId: number;
+  id: string; // Unique identifier for the job
+  title: string; // Title of the job
+  companyName: string; // Company offering the job
+  description: string; // Detailed description of the job
+  skills: string; // Required skills for the job
+  experience: string; // Required experience level
+  status: "Open" | "Closed"; // Status of the job (can be Open or Closed)
+  createdAt: string; // Date when the job was created
 }
 
-export interface Admin {
-  id: number;
-  name: string;
-  email: string;
-}
-
+// Type for an Application object
 export interface Application {
-  id: number; // Must match the back-end's Application interface
-  jobId: number;
-  applicantName: string;
-  applicantEmail: string;
-  resumeUrl: string;
-  coverLetterUrl: string;
-  appliedAt: string; // ISO date-time string (e.g., "2024-05-20T14:30:00Z")
-  status: ApplicationStatus;
-  jobTitle: string;
-  companyName: string;
-  notes?: string; // Optional field for notes
-  reminders?: Reminder[]; // Changed from 'reminder' to 'reminders' to support multiple reminders
+  id: string; // Unique identifier for the application
+  jobId: string; // The ID of the job this application is for
+  userId: string; // The ID of the user applying for the job
+  fullName: string; // Applicant's full name
+  email: string; // Applicant's email address
+  resume: string; // Resume file name or URL
+  coverLetter: string; // Cover letter text
+  question: string; // Question answered by the applicant
+  status: "Pending" | "Screening" | "Interviewing" | "Rejected" | "Accepted"; // Current application status
+  createdAt: string; // Date when the application was submitted
 }
 
-export interface Reminder {
-  id: number;
-  applicationId: number;
-  reminderDate: string; // ISO date-time string
-  message?: string;
+// Type for User (Job Seeker or Recruiter)
+export interface User {
+  id: string; // Unique identifier for the user
+  email: string; // User's email address
+  password: string; // User's password (hashed)
+  fullName: string; // Full name of the user
+  role: "candidate" | "recruiter" | "admin"; // Role of the user
+  createdAt: string; // Date when the user registered
 }
 
-export type ApplicationStatus = 'Applied' | 'Pending' | 'Interviewing' | 'Rejected' | 'Accepted';
+// Type for API Response when fetching jobs
+export interface JobApiResponse {
+  jobs: Job[]; // Array of job objects
+  totalCount: number; // Total number of jobs available
+}
+
+// Type for API Response when fetching applications
+export interface ApplicationApiResponse {
+  applications: Application[]; // Array of application objects
+  totalCount: number; // Total number of applications available
+}
+
+// Type for form input data when applying for a job
+export interface ApplyJobFormData {
+  fullName: string;
+  email: string;
+  resume: string;
+  coverLetter: string;
+  question: string;
+}
+
+// Type for context state (if used globally)
+export interface AppContextState {
+  user: User | null; // Current logged-in user or null if not logged in
+  jobs: Job[]; // List of jobs
+  applications: Application[]; // List of applications for the logged-in user
+}
+
+// Type for handling error responses from API
+export interface ErrorResponse {
+  message: string; // Error message returned from API
+  statusCode: number; // HTTP status code
+}
+
+// Type for job filter options (if applying filters to job listings)
+export interface JobFilterOptions {
+  searchQuery: string; // Search query string for job title or company name
+  status: "Open" | "Closed"; // Filter jobs by status
+  experienceLevel: string; // Filter jobs by experience level
+}

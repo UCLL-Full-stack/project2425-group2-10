@@ -1,84 +1,89 @@
-// back-end/types/index.ts
+/**
+ * User Roles
+ */
+export type UserRole = "admin" | "recruiter" | "candidate";
 
-export enum ApplicationStatus {
-    Applied = 'Applied',
-    Pending = 'Pending',
-    Interviewing = 'Interviewing',
-    Rejected = 'Rejected',
-    Accepted = 'Accepted',
+/**
+ * Common Types for API Responses
+ */
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  message?: string;
+  error?: string;
 }
 
-export enum JobStatus {
-    Open = 'Open',
-    Closed = 'Closed',
-    Pending = 'Pending',
-    // Add other statuses as needed
+/**
+ * Paginated Response
+ */
+export interface PaginatedResponse<T = any> {
+  success: boolean;
+  data: T[];
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
 }
 
-export interface Skill {
-    id: number;
-    name: string;
+/**
+ * Authentication Request
+ */
+export interface AuthRequest {
+  email: string;
+  password: string;
 }
+
+/**
+ * User Object
+ */
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+  createdAt: Date;
+}
+
+/**
+ * Job Object
+ */
 export interface Job {
-    id: number;
-    companyName: string;
-    jobTitle: string;
-    date: Date; // Changed from string to Date
-    status: JobStatus; // Changed to enum
-    description: string;
-    skills: Skill[]; // Associated skills
-    adminId: number; // Added as required
-    createdAt: Date;
-    updatedAt: Date;
+  id: string;
+  companyName: string;
+  title: string;
+  experience: string;
+  description: string;
+  skills: string;
+  status: "Open" | "Closed";
+  createdAt: Date;
+  postedById: string; // ID of the user who posted the job
 }
 
-export interface Admin {
-    id: number;
-    name: string;
-    email: string;
-}
-
+/**
+ * Application Object
+ */
 export interface Application {
-    id: number;
-    jobId: number;
-    applicantName: string;
-    applicantEmail: string;
-    resumeUrl: string;
-    coverLetterUrl: string;
-    appliedAt: Date; // Changed from string to Date
-    status: ApplicationStatus; // Changed to enum
-    notes?: string;
-    reminders: Reminder[];
-    createdAt: Date;
-    updatedAt: Date;
-    job?: Job; // Optional, if included
+  id: string;
+  fullName: string;
+  email: string;
+  resume: string; // Path to the uploaded resume
+  coverLetter: string; // Path to the uploaded cover letter
+  question?: string;
+  status: "Pending" | "Screening" | "Interviewing" | "Rejected" | "Accepted";
+  createdAt: Date;
+  jobId: string; // ID of the associated job
+  userId: string; // ID of the candidate who applied
 }
 
-export interface NewApplication {
-    jobId: number;
-    applicantName: string;
-    applicantEmail: string;
-    resumeUrl: string;
-    coverLetterUrl: string;
-    appliedAt: Date; // Changed from string to Date
-    status: ApplicationStatus; // Changed to enum
-    notes?: string;
-}
+/**
+ * Admin Object (extends User)
+ */
+export interface Admin extends User {}
 
-export interface Reminder {
-    id: number;
-    applicationId: number;
-    reminderDate: Date;
-    message?: string;
-    createdAt: Date;
-    updatedAt: Date;
-}
+/**
+ * Recruiter Object (extends User)
+ */
+export interface Recruiter extends User {}
 
-export interface Application extends NewApplication {
-    id: number;
-    notes?: string;
-}
-
-export type NewJob = Omit<Job, 'id' | 'createdAt' | 'updatedAt' | 'skills'> & {
-    skills: string[]; // Array of skill names
-};
+/**
+ * Candidate Object (extends User)
+ */
+export interface Candidate extends User {}
