@@ -1,7 +1,10 @@
 import React from "react";
 import { Job } from "../types";  // Ensure that Job type is defined in front-end/types
+<<<<<<< HEAD
 import { useRouter } from "next/router"; // Import Next.js useRouter for navigation
 
+=======
+>>>>>>> ca06a2b7736a0ee727669a2811bdc9a4160f6a2f
 interface JobCardProps {
   job: Job;  // Define the prop type as Job
 }

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";  // Import useRouter from Next.js
-import AuthService from "@services/AuthService";  // Import the registerUser function
+import AuthService from "@services/AuthService"; 
+import Home from "@components/Home"; // Import the registerUser function
 
 const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState("");

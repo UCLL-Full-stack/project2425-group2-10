@@ -1,7 +1,12 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";  // For navigation
+<<<<<<< HEAD
 import JobService from "@services/JobService";  // Import JobService for creating jobs
 import Navbar from "@components/Navbar";  // Import Navbar component
+=======
+import JobService from "@services/JobService";
+import Home from "@components/Home";  // Import JobService for creating jobs
+>>>>>>> ca06a2b7736a0ee727669a2811bdc9a4160f6a2f
 
 const CreateJobPage: React.FC = () => {
   const router = useRouter();
@@ -38,6 +43,7 @@ const CreateJobPage: React.FC = () => {
   };
 
   return (
+<<<<<<< HEAD
     <div>
       <Navbar />  {/* Include Navbar at the top of the page */}
       <div className="max-w-3xl mx-auto p-4">
@@ -114,6 +120,74 @@ const CreateJobPage: React.FC = () => {
             type="submit"
             className="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700"
             disabled={loading}
+=======
+    <div className="max-w-3xl mx-auto p-4">
+      <Home />
+      <h2 className="text-3xl font-semibold text-gray-800 mb-4">Create a New Job</h2>
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label htmlFor="title" className="block text-gray-700">Job Title</label>
+          <input
+            type="text"
+            id="title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full px-4 py-2 mt-2 border rounded-md"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="companyName" className="block text-gray-700">Company Name</label>
+          <input
+            type="text"
+            id="companyName"
+            value={companyName}
+            onChange={(e) => setCompanyName(e.target.value)}
+            className="w-full px-4 py-2 mt-2 border rounded-md"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="description" className="block text-gray-700">Description</label>
+          <textarea
+            id="description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full px-4 py-2 mt-2 border rounded-md"
+            rows={4}
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="skills" className="block text-gray-700">Skills Required</label>
+          <input
+            type="text"
+            id="skills"
+            value={skills}
+            onChange={(e) => setSkills(e.target.value)}
+            className="w-full px-4 py-2 mt-2 border rounded-md"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="experience" className="block text-gray-700">Experience Level</label>
+          <input
+            type="text"
+            id="experience"
+            value={experience}
+            onChange={(e) => setExperience(e.target.value)}
+            className="w-full px-4 py-2 mt-2 border rounded-md"
+            required
+          />
+        </div>
+        <div className="mb-4">
+          <label htmlFor="status" className="block text-gray-700">Job Status</label>
+          <select
+            id="status"
+            value={status}
+            onChange={(e) => setStatus(e.target.value)}
+            className="w-full px-4 py-2 mt-2 border rounded-md"
+>>>>>>> ca06a2b7736a0ee727669a2811bdc9a4160f6a2f
           >
             {loading ? "Creating..." : "Create Job"}
           </button>

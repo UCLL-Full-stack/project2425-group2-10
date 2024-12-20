@@ -1,6 +1,11 @@
 import React from "react";
 import Link from "next/link"; // Import Link from Next.js for navigation
+<<<<<<< HEAD
 import { useRouter } from "next/router";  // For navigation
+=======
+import LanguageSwitcher from './LanguageSwitcher';
+
+>>>>>>> ca06a2b7736a0ee727669a2811bdc9a4160f6a2f
 
 const Navbar: React.FC = () => {
   const router = useRouter();
@@ -54,6 +59,7 @@ const Navbar: React.FC = () => {
             </>
           )}
         </div>
+        <LanguageSwitcher /> {/* Add the language switcher here */}
       </div>
     </nav>
   );
